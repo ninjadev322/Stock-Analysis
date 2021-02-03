@@ -17,10 +17,6 @@ from urllib.request import urlopen, Request
 import re
 #lxml package
 
-#Valuation model: https://github.com/SimplyWallSt/Company-Analysis-Model/blob/master/MODEL.markdown#value
-#Potentially Undervalued: https://simplywall.st/screener/edit/explore/152/american-potentially-undervalued/us
-#Analyst Top Picks: https://simplywall.st/screener/edit/explore/10189/american-analysts-top-stock-pics/us
-
 def fundamentalInfoFVZ(soup) -> float:
     #We inspect the webpage to finde the html tags of the pbjects that we want
     #Transforms the html to a pandas dataframe
