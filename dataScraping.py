@@ -53,6 +53,8 @@ def IncomeStatementMW(soup) -> float:
             RevenuePast5[i] = float(RevenuePast5[i][0:-1]) * 1000000000
         elif RevenuePast5[i][-1] == 'M':
             RevenuePast5[i] = float(RevenuePast5[i][0:-1]) * 1000000 
+        elif RevenuePast5[-1] == 'K':
+                RevenuePast5 = float(RevenuePast5[0:-1]) * 1000    
         elif RevenuePast5[i] == '-':
             RevenuePast5.remove(RevenuePast5[i])             
 
@@ -71,6 +73,8 @@ def IncomeStatementMW(soup) -> float:
             EBITDA = float(EBITDA[0:-1]) * 1000000000
         elif EBITDA[-1] == 'M':
             EBITDA = float(EBITDA[0:-1]) * 1000000 
+        elif EBITDA[-1] == 'K':
+                EBITDA = float(EBITDA[0:-1]) * 1000    
         elif EBITDA == '-':
             EBITDA = 0    
 
@@ -83,6 +87,8 @@ def IncomeStatementMW(soup) -> float:
             DepreciationAmortization = float(DepreciationAmortization[0:-1]) * 1000000000
         elif DepreciationAmortization[-1] == 'M':
             DepreciationAmortization = float(DepreciationAmortization[0:-1]) * 1000000
+        elif DepreciationAmortization[-1] == 'K':
+                DepreciationAmortization = float(DepreciationAmortization[0:-1]) * 1000    
         elif DepreciationAmortization == '-':
             DepreciationAmortization = 0     
 
@@ -137,7 +143,9 @@ def BalanceSheet(soup) -> None:
         if TotalAssets[-1] == 'B':
             TotalAssets = float(TotalAssets[0:-1]) * 1000000000
         elif TotalAssets[-1] == 'M':
-            TotalAssets = float(TotalAssets[0:-1]) * 1000000    
+            TotalAssets = float(TotalAssets[0:-1]) * 1000000 
+        elif TotalAssets[-1] == 'K':
+                TotalAssets = float(TotalAssets[0:-1]) * 1000       
         elif TotalAssets == '-':
             TotalAssets = 0    
 
@@ -150,6 +158,8 @@ def BalanceSheet(soup) -> None:
             TotalCurrentAssets = float(TotalCurrentAssets[0:-1]) * 1000000000
         elif TotalCurrentAssets[-1] == 'M':
             TotalCurrentAssets = float(TotalCurrentAssets[0:-1]) * 1000000  
+        elif TotalCurrentAssets[-1] == 'K':
+                TotalCurrentAssets = float(TotalCurrentAssets[0:-1]) * 1000    
         elif TotalCurrentAssets == '-':
             TotalCurrentAssets = 0                       
 
@@ -167,6 +177,8 @@ def BalanceSheet(soup) -> None:
             TotalCurrentLiabilities = float(TotalCurrentLiabilities[0:-1]) * 1000000000
         elif TotalCurrentLiabilities[-1] == 'M':
             TotalCurrentLiabilities = float(TotalCurrentLiabilities[0:-1]) * 1000000   
+        elif TotalCurrentLiabilities[-1] == 'K':
+                TotalCurrentLiabilities = float(TotalCurrentLiabilities[0:-1]) * 1000    
         elif TotalCurrentLiabilities == '-':
             TotalCurrentLiabilities = 0    
 
@@ -179,6 +191,8 @@ def BalanceSheet(soup) -> None:
             TotalLiabilities = float(TotalLiabilities[0:-1]) * 1000000000
         elif TotalLiabilities[-1] == 'M':
             TotalLiabilities = float(TotalLiabilities[0:-1]) * 1000000   
+        elif TotalLiabilities[-1] == 'K':
+                TotalLiabilities = float(TotalLiabilities[0:-1]) * 1000    
         elif TotalLiabilities == '-':
             TotalLiabilities = 0    
    
@@ -207,6 +221,8 @@ def BalanceSheet(soup) -> None:
             TotalEquity = float(TotalEquity[0:-1]) * 1000000000
         elif TotalEquity[-1] == 'M':
             TotalEquity = float(TotalEquity[0:-1]) * 1000000   
+        elif TotalEquity[-1] == 'K':
+                TotalEquity = float(TotalEquity[0:-1]) * 1000    
         elif TotalEquity == '-':
             TotalEquity = 0
 
@@ -230,16 +246,89 @@ def CashFlow(soup) -> None:
     
     OperatingActivities = CashFlow[0]
     OperatingActivities.columns = pd.RangeIndex(0, len(OperatingActivities.columns)) #Indexing the columns as numbers so that the differences in the name of columns wont matter
-    #Net Operating Cash Flow
 
-    FinancialActivities = CashFlow[1]
-    FinancialActivities.columns = pd.RangeIndex(0, len(FinancialActivities.columns)) #Indexing the columns as numbers so that the differences in the name of columns wont matter
+    #We check if the Net Operating Cash Flow exists in the income statement, and then we isolate it and convert the number from millions or billions     
+    NetOperatingCashFlow = 0
+    if len(OperatingActivities.loc[OperatingActivities[0] == 'Net Operating Cash Flow Net Operating Cash Flow']) == 1:
+        NetOperatingCashFlow = OperatingActivities.loc[OperatingActivities[0] == 'Net Operating Cash Flow Net Operating Cash Flow'][len(OperatingActivities.columns) - 2]
+        NetOperatingCashFlow = NetOperatingCashFlow[int(NetOperatingCashFlow.index.values)]
+        #Since negative values come with parentesis , we check for those and then remove them
+        if NetOperatingCashFlow[0] == '(':
+            NetOperatingCashFlow = NetOperatingCashFlow[1:-1] #We dont know what position it is in so we find out and take only that specific value
+            if NetOperatingCashFlow[-1] == 'B':
+                NetOperatingCashFlow = float(NetOperatingCashFlow[0:-1]) * -1000000000
+            elif NetOperatingCashFlow[-1] == 'M':
+                NetOperatingCashFlow = float(NetOperatingCashFlow[0:-1]) * -1000000   
+            elif NetOperatingCashFlow[-1] == 'K':
+                NetOperatingCashFlow = float(NetOperatingCashFlow[0:-1]) * -1000    
+        elif NetOperatingCashFlow[-1] == 'B':
+            NetOperatingCashFlow = float(NetOperatingCashFlow[0:-1]) * 1000000000
+        elif NetOperatingCashFlow[-1] == 'M':
+            NetOperatingCashFlow = float(NetOperatingCashFlow[0:-1]) * 1000000   
+        elif NetOperatingCashFlow[-1] == 'K':
+                NetOperatingCashFlow = float(NetOperatingCashFlow[0:-1]) * 1000           
+        elif NetOperatingCashFlow == '-':
+            NetOperatingCashFlow = 0             
+
+    InvestingActivities = CashFlow[1]
+    InvestingActivities.columns = pd.RangeIndex(0, len(InvestingActivities.columns)) #Indexing the columns as numbers so that the differences in the name of columns wont matter
+
+    FinancingActivities = CashFlow[2]
+    FinancingActivities.columns = pd.RangeIndex(0, len(FinancingActivities.columns)) #Indexing the columns as numbers so that the differences in the name of columns wont matter
     
-    InvestingActivities = CashFlow[2]
-    InvestingActivities.columns = pd.RangeIndex(0, len(Investing.columns)) #Indexing the columns as numbers so that the differences in the name of columns wont matter
     #Issuance/Reduction of Debt, Net
-    #Free cash flow
+    #We check if the Debt reduction exists in the income statement, and then we isolate it and convert the number from millions or billions     
+    DebtReduction = 0
+    TotalDebtReduction = 0
+    if len(FinancingActivities.loc[FinancingActivities[0] == 'Issuance/Reduction of Debt, Net Issuance/Reduction of Debt, Net']) == 1:
+        #We want to see how much debt was reduced total in the past five years so we add each one
+        for i in range(1, len(FinancingActivities.columns) - 1):
+            DebtReduction = FinancingActivities.loc[FinancingActivities[0] == 'Issuance/Reduction of Debt, Net Issuance/Reduction of Debt, Net'][i]
+            DebtReduction = DebtReduction[int(DebtReduction.index.values)]
+            #Since negative values come with parentesis , we check for those and then remove them
+            if DebtReduction[0] == '(':
+                DebtReduction = DebtReduction[1:-1] #We dont know what position it is in so we find out and take only that specific value
+                if DebtReduction[-1] == 'B':
+                    DebtReduction = float(DebtReduction[0:-1]) * -1000000000
+                elif DebtReduction[-1] == 'M':
+                    DebtReduction = float(DebtReduction[0:-1]) * -1000000 
+                elif DebtReduction[-1] == 'K':
+                    DebtReduction = float(DebtReduction[0:-1]) * -1000        
+            elif DebtReduction[-1] == 'B':
+                DebtReduction = float(DebtReduction[0:-1]) * 1000000000
+            elif DebtReduction[-1] == 'M':
+                DebtReduction = float(DebtReduction[0:-1]) * 1000000 
+            elif DebtReduction[-1] == 'K':
+                DebtReduction = float(DebtReduction[0:-1]) * 1000             
+            elif DebtReduction == '-':
+                DebtReduction = 0 
+            TotalDebtReduction += DebtReduction          
 
+    #Free cash flow
+    #We check if the Free Cash Flow exists in the income statement, and then we isolate it and convert the number from millions or billions     
+    FreeCashFlow = 0
+    if len(FinancingActivities.loc[FinancingActivities[0] == 'Free Cash Flow Free Cash Flow']) == 1:
+        FreeCashFlow = FinancingActivities.loc[FinancingActivities[0] == 'Free Cash Flow Free Cash Flow'][len(FinancingActivities.columns) - 2]
+        FreeCashFlow = FreeCashFlow[int(FreeCashFlow.index.values)]
+        #Since negative values come with parentesis , we check for those and then remove them
+        if FreeCashFlow[0] == '(':
+            FreeCashFlow = FreeCashFlow[1:-1] #We dont know what position it is in so we find out and take only that specific value
+            if FreeCashFlow[-1] == 'B':
+                FreeCashFlow = float(FreeCashFlow[0:-1]) * -1000000000
+            elif FreeCashFlow[-1] == 'M':
+                FreeCashFlow = float(FreeCashFlow[0:-1]) * -1000000 
+            elif FreeCashFlow[-1] == 'K':
+                FreeCashFlow = float(FreeCashFlow[0:-1]) * -1000       
+        elif FreeCashFlow[-1] == 'B':
+            FreeCashFlow = float(FreeCashFlow[0:-1]) * 1000000000
+        elif FreeCashFlow[-1] == 'M':
+            FreeCashFlow = float(FreeCashFlow[0:-1]) * 1000000 
+        elif FreeCashFlow[-1] == 'K':
+                FreeCashFlow = float(FreeCashFlow[0:-1]) * 1000             
+        elif FreeCashFlow == '-':
+            FreeCashFlow = 0
+
+    return FreeCashFlow, TotalDebtReduction, NetOperatingCashFlow                 
 
 
 def main ():
@@ -283,7 +372,7 @@ def main ():
     PE, PEG, PS, PB, MarketCap, DebtEquity, Recom = fundamentalInfoFVZ(soup1)
     RevenuePast5, RevenueGrowthPast5, EBITDA, EBIT, DepreciationAmortization, EPSpast5, EPSgrowthPast5 = IncomeStatementMW(soup2)
     TotalEquity, GrowthLA, TotalLiabilities, TotalCurrentLiabilities, LongTermLiabilities, TotalAssets, TotalCurrentAssets, LongTermAssets = BalanceSheet(soup3)
-
+    FreeCashFlow, TotalDebtReduction, NetOperatingCashFlow = CashFlow(soup4)
 
     #insider = pd.read_html(str(soup), attrs={'class': 'body-table'})
     #print(insider[0])
