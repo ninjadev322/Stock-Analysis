@@ -15,7 +15,7 @@ import pandas as pd
 from typing import List
 from urllib.request import urlopen, Request
 import re
-#lxml package
+#import lxml
 
 def fundamentalInfoFVZ(soup) -> float:
     #We inspect the webpage to finde the html tags of the pbjects that we want
@@ -276,7 +276,6 @@ def CashFlow(soup) -> None:
     FinancingActivities = CashFlow[2]
     FinancingActivities.columns = pd.RangeIndex(0, len(FinancingActivities.columns)) #Indexing the columns as numbers so that the differences in the name of columns wont matter
     
-    #Issuance/Reduction of Debt, Net
     #We check if the Debt reduction exists in the income statement, and then we isolate it and convert the number from millions or billions     
     DebtReduction = 0
     TotalDebtReduction = 0
@@ -304,7 +303,6 @@ def CashFlow(soup) -> None:
                 DebtReduction = 0 
             TotalDebtReduction += DebtReduction          
 
-    #Free cash flow
     #We check if the Free Cash Flow exists in the income statement, and then we isolate it and convert the number from millions or billions     
     FreeCashFlow = 0
     if len(FinancingActivities.loc[FinancingActivities[0] == 'Free Cash Flow Free Cash Flow']) == 1:
