@@ -102,11 +102,20 @@ def fundamentalInfoFVZ(soup) -> float:
     if YearHighPercent == '-':
         YearHighPercent = 0
     else:
-        YearHighPercent = YearHighPercent[0:-1]       
-               
+        YearHighPercent = YearHighPercent[0:-1]   
+    EPSNextY = fundamentals[0][5][4] #Earnings per share growth for next year 
+    if EPSNextY == '-':
+        EPSNextY = 0
+    else:    
+        EPSNextY = EPSNextY[0:-1]  
+    EPSNext5Y = fundamentals[0][5][5] #Earnings per share growth for next 5 years 
+    if EPSNext5Y == '-':
+        EPSNext5Y = 0
+    else:    
+        EPSNext5Y = EPSNext5Y[0:-1]                 
 
 
-    return PE, PEG, PS, PB, MarketCap, DebtEquity, Recom, InsiderTrans, InstitutionTrans, ROA, ROE, AvgVolume, Price, LastChange, PerfWeek, PerfMonth, PerfYear, YearHighPercent
+    return PE, PEG, PS, PB, MarketCap, DebtEquity, Recom, InsiderTrans, InstitutionTrans, ROA, ROE, AvgVolume, Price, LastChange, PerfWeek, PerfMonth, PerfYear, YearHighPercent, EPSNextY, EPSNext5Y
 
 def IncomeStatementMW(soup) -> float:
     #We inspect the webpage to finde the html tags of the objects that we want
@@ -164,7 +173,7 @@ def IncomeStatementMW(soup) -> float:
                 DepreciationAmortization = float(DepreciationAmortization[0:-1]) * 1000    
         elif DepreciationAmortization == '-':
             DepreciationAmortization = 0     
-
+       
     #We check if the EPS of the past 5 years exists in the income statement, and then we isolate it and convert the number from millions
     EPSpast5 = []
     if len(IncomeStatement.loc[IncomeStatement[0] == 'EPS (Basic) EPS (Basic)']) == 1:
@@ -199,7 +208,7 @@ def IncomeStatementMW(soup) -> float:
 
     return RevenuePast5, RevenueGrowthPast5, EBITDA, EBIT, DepreciationAmortization, EPSpast5, EPSgrowthPast5
 
-def BalanceSheet(soup) -> None:
+def BalanceSheet(soup) -> float:
     #We inspect the webpage to finde the html tags of the objects that we want
     #Transform the html to a pandas dataframe
     #Balance sheet is broken up into these two categories
@@ -310,8 +319,7 @@ def BalanceSheet(soup) -> None:
 
     return TotalEquity, GrowthLA, TotalLiabilities, TotalCurrentLiabilities, LongTermLiabilities, TotalAssets, TotalCurrentAssets, LongTermAssets             
             
-
-def CashFlow(soup) -> None:
+def CashFlow(soup) -> float:
     #We inspect the webpage to finde the html tags of the objects that we want
     #Transform the html to a pandas dataframe
     #Cash flow is broken up into these three categories
@@ -401,10 +409,61 @@ def CashFlow(soup) -> None:
 
     return FreeCashFlow, TotalDebtReduction, NetOperatingCashFlow                 
 
+def EPSRevisions(soup) -> float:
+    #We inspect the webpage to finde the html tags of the objects that we want
+    #Transform the html to a pandas dataframe
+    #estimates is broken down in four different parts and we want the last two
+    estimates = pd.read_html(str(soup), attrs={'class' : 'table value-pairs no-heading font--lato'})
+
+    firstYear = estimates[2] #EPS estimate for next year revisions from 3 months ago 1 month ago and current 
+    estimateRevision1 = 0
+    for i in range(2, 0, -1):
+        #We calculate the percentage change from one year to another and then average them out
+        estimateRevision1 += (float(firstYear[1][i - 1][1:]) * 100) / float(firstYear[1][i][1:]) - 100
+        
+    secondYear = estimates[3] #EPS estimate for the year after next year revisions from 3 months ago 1 month ago and current 
+    estimateRevision2 = 0
+    for i in range(2, 0, -1):
+        #We calculate the percentage change of the revisions 
+        estimateRevision2 += (float(secondYear[1][i - 1][1:]) * 100) / float(secondYear[1][i][1:]) - 100
+
+    return estimateRevision1, estimateRevision2
+
+def PriceTargets(soup) -> float:
+    #We inspect the webpage to finde the html tags of the objects that we want
+    #Transform the html to a pandas dataframe
+    #estimates is broken down in four different parts and we want the second one
+    estimates = pd.read_html(str(soup), attrs={'class' : 'table value-pairs no-heading font--lato'})
+
+    priceTargets = estimates[1]
+    HighTarget = float(priceTargets[1][0][1:])
+    LowTarget = float(priceTargets[1][2][1:])
+    AverageTarget = float(priceTargets[1][3][1:])
+
+    Summary = estimates[0]
+    NumberOfRatings = int(Summary[1][2])
+
+    return HighTarget, LowTarget, AverageTarget, NumberOfRatings
+
+def EPSEstimates(soup):
+    #We inspect the webpage to finde the html tags of the objects that we want
+    #Transform the html to a pandas dataframe
+    EPSestimates = pd.read_html(str(soup), attrs={'class' : 'table table--primary'})[0]
+    #We save the chart to be able to graph the estimates later 
+
+    return EPSestimates
+
+def Recomendations(soup) -> int:
+    #We inspect the webpage to finde the html tags of the objects that we want
+    #Transform the html to a pandas dataframe
+    recom = pd.read_html(str(soup), attrs={'class' : 'table table-primary align--left border--dotted'})    
+    #retieve info to create a bar chart, timeframes: current 1M ago 3M ago, Ratings: buy overweight hold underweight sell
+    print(recom)
+
 
 def main ():
     
-    Ticker = 'gff'
+    Ticker = 'dss'
     url1 = 'http://finviz.com/quote.ashx?t=' + Ticker
     req1 = Request(url1, headers = {'User-Agent': 'Mozilla/5'}) #The website restricts urllib request so we must use request switching the user agent to mozilla 
     webpage_coded1 = urlopen(req1, timeout = 4).read() #We open the page and read all the raw info
@@ -449,26 +508,18 @@ def main ():
     soup5 = BeautifulSoup(webpage_coded5, 'html.parser') #Parsing(breaking the code down into relevant info) the html code
 
 
-    PE, PEG, PS, PB, MarketCap, DebtEquity, Recom, InsiderTrans, InstitutionTrans, ROA, ROE, AvgVolume, Price, LastChange, PerfWeek, PerfMonth, PerfYear, YearHighPercent = fundamentalInfoFVZ(soup1)
+    PE, PEG, PS, PB, MarketCap, DebtEquity, Recom, InsiderTrans, InstitutionTrans, ROA, ROE, AvgVolume, Price, LastChange, PerfWeek, PerfMonth, PerfYear, YearHighPercent, EPSNextY, EPSNext5Y = fundamentalInfoFVZ(soup1)
+
     RevenuePast5, RevenueGrowthPast5, EBITDA, EBIT, DepreciationAmortization, EPSpast5, EPSgrowthPast5 = IncomeStatementMW(soup2)
     TotalEquity, GrowthLA, TotalLiabilities, TotalCurrentLiabilities, LongTermLiabilities, TotalAssets, TotalCurrentAssets, LongTermAssets = BalanceSheet(soup3)
     FreeCashFlow, TotalDebtReduction, NetOperatingCashFlow = CashFlow(soup4)
 
-    #insider = pd.read_html(str(soup), attrs={'class': 'body-table'})
-    #print(insider[0])
+    estimateRevision1, estimateRevision2 = EPSRevisions(soup5)
+    HighTarget, LowTarget, AverageTarget, NumberOfRatings = PriceTargets(soup5)
 
-    ratings = pd.read_html(str(soup5), attrs={'class' : 'table value-pairs no-heading font--lato'})
-    #print(ratings[0])
-    #ratings[0] first table with general info
-    #ratings[1] table with all price targets
-    #ratings[2] table with eps estimates for next year from now, 1 month ago and three months ago
-    #ratings[3] table with eps estimates for next next year from now, 1 month ago and three months ago
+    EPSestimates = EPSEstimates(soup5)
 
-    EPSestimates = pd.read_html(str(soup5), attrs={'class' : 'table table--primary'})
-    #print(EPSestimates[0]) #EPS estimates for the next few years
-
-    Advice = pd.read_html(str(soup5), attrs={'class' : 'table table-primary align--left border--dotted'})
-    print(Advice)
+    Recomendations(soup5)
 
 
 
