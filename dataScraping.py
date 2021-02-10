@@ -21,19 +21,92 @@ def fundamentalInfoFVZ(soup) -> float:
     #We inspect the webpage to finde the html tags of the pbjects that we want
     #Transforms the html to a pandas dataframe
     fundamentals = pd.read_html(str(soup), attrs={'class': 'snapshot-table2'}) #Can only do this if class type is a table 
-
     PE = fundamentals[0][3][0] # Price to earnings ratio
+    if PE == '-':
+        PE = 0
     PEG = fundamentals[0][3][2] # Price to earnings growth ratio
+    if PEG == '-':
+        PEG = 0
     PS = fundamentals[0][3][3] # Price to sales ratio
+    if PS == '-':
+        PS = 0
     PB = fundamentals[0][3][4] # Price to book value ratio
+    if PB == '-':
+        PB = 0
     DebtEquity = fundamentals[0][3][9] # Debt to equity ratio
+    if DebtEquity == '-':
+        DebtEquity = 0
     Recom = fundamentals[0][1][11] # Analysts recomendations
-
+    if Recom == '-':
+        Recom = 0
     MarketCap = fundamentals[0][1][1] #Number of shares times the the current price of each share
-    MarketCap = float(MarketCap[0:-1]) #When scraped comes with a B or M at the end we tranform it into number 
-    MarketCap = MarketCap * 1000000000 #The value is given to use in billions so we transform it
+    if MarketCap == '-':
+        MarketCap = 0
+    else:    
+        MarketCap = float(MarketCap[0:-1]) #When scraped comes with a B or M at the end we tranform it into number 
+        MarketCap = MarketCap * 1000000000 #The value is given to use in billions so we transform it
+    InsiderTrans = fundamentals[0][7][1] #The percentage of recent movements by insiders in the company
+    if InsiderTrans == '-':
+        InsiderTrans = 0
+    else:    
+        InsiderTrans = InsiderTrans[0:-1]    
+    InstitutionTrans = fundamentals[0][7][3] #The percentage of recent mvoements made my hedgefunds and institutions
+    if InstitutionTrans == '-':
+        InstitutionTrans = 0
+    else:    
+        InstitutionTrans = InstitutionTrans[0:-1]
+    ROA = fundamentals[0][7][4] #Return on assets
+    if ROA == '-':
+        ROA = 0
+    else:    
+        ROA = ROA[0:-1]   
+    ROE = fundamentals[0][7][5] #Return on equity
+    if ROE == '-':
+        ROE = 0
+    else:    
+        ROE = ROE[0:-1]       
+    AvgVolume = fundamentals[0][9][10] #The amount of shares bought and sold in a single trading period
+    if AvgVolume == '-':
+        AvgVolume = 0
+    else:
+        if AvgVolume[-1] == 'B':
+            AvgVolume = float(AvgVolume[0:-1]) * 1000000000
+        elif AvgVolume[-1] == 'M':
+            AvgVolume = float(AvgVolume[0:-1]) * 1000000
+        elif AvgVolume[-1] == 'K':
+                AvgVolume = float(AvgVolume[0:-1]) * 1000
+    Price = fundamentals[0][11][10] #price per share
+    if Price == '-':
+        Price = 0  
+    LastChange = fundamentals[0][11][11] #The price percentage change in the last trading day
+    if LastChange == '-':
+        LastChange = 0
+    else:
+        LastChange = LastChange[0:-1]    
+    PerfWeek = fundamentals[0][11][0] #The price percentage change in the last week
+    if PerfWeek == '-':
+        PerfWeek = 0
+    else:
+        PerfWeek = PerfWeek[0:-1]    
+    PerfMonth = fundamentals[0][11][1] #The price percentage change in the last month
+    if PerfMonth == '-':
+        PerfMonth = 0
+    else:
+        PerfMonth = PerfMonth[0:-1]    
+    PerfYear = fundamentals[0][11][4] #The price percentage change in the last year
+    if PerfYear == '-':
+        PerfYear = 0
+    else:
+        PerfYear = PerfYear[0:-1]    
+    YearHighPercent = fundamentals[0][9][6] #The percent difference from its 52 week high
+    if YearHighPercent == '-':
+        YearHighPercent = 0
+    else:
+        YearHighPercent = YearHighPercent[0:-1]       
+               
 
-    return PE, PEG, PS, PB, MarketCap, DebtEquity, Recom
+
+    return PE, PEG, PS, PB, MarketCap, DebtEquity, Recom, InsiderTrans, InstitutionTrans, ROA, ROE, AvgVolume, Price, LastChange, PerfWeek, PerfMonth, PerfYear, YearHighPercent
 
 def IncomeStatementMW(soup) -> float:
     #We inspect the webpage to finde the html tags of the objects that we want
@@ -366,8 +439,17 @@ def main ():
 
     soup4 = BeautifulSoup(webpage_coded4, 'html.parser') #Parsing(breaking the code down into relevant info) the html code
 
+    ###################################################################################################################################################
 
-    PE, PEG, PS, PB, MarketCap, DebtEquity, Recom = fundamentalInfoFVZ(soup1)
+    url5 = 'https://www.marketwatch.com/investing/stock/' + Ticker + '/analystestimates?mod=mw_quote_tab'
+    req5 = Request(url5, headers = {'User-Agent': 'Mozilla/5'}) #The website restricts urllib request so we must use request switching the user agent to mozilla 
+    webpage_coded5 = urlopen(req5, timeout = 4).read() #We open the page and read all the raw info
+    #webpage_decoded = webpage_coded.decode('utf-8') #Since it is coded in utf-8 we decode it to be able to process it
+
+    soup5 = BeautifulSoup(webpage_coded5, 'html.parser') #Parsing(breaking the code down into relevant info) the html code
+
+
+    PE, PEG, PS, PB, MarketCap, DebtEquity, Recom, InsiderTrans, InstitutionTrans, ROA, ROE, AvgVolume, Price, LastChange, PerfWeek, PerfMonth, PerfYear, YearHighPercent = fundamentalInfoFVZ(soup1)
     RevenuePast5, RevenueGrowthPast5, EBITDA, EBIT, DepreciationAmortization, EPSpast5, EPSgrowthPast5 = IncomeStatementMW(soup2)
     TotalEquity, GrowthLA, TotalLiabilities, TotalCurrentLiabilities, LongTermLiabilities, TotalAssets, TotalCurrentAssets, LongTermAssets = BalanceSheet(soup3)
     FreeCashFlow, TotalDebtReduction, NetOperatingCashFlow = CashFlow(soup4)
@@ -375,9 +457,18 @@ def main ():
     #insider = pd.read_html(str(soup), attrs={'class': 'body-table'})
     #print(insider[0])
 
-    #ratings = pd.read_html(str(soup), attrs={'class': 'fullview-ratings-outer'})
+    ratings = pd.read_html(str(soup5), attrs={'class' : 'table value-pairs no-heading font--lato'})
     #print(ratings[0])
+    #ratings[0] first table with general info
+    #ratings[1] table with all price targets
+    #ratings[2] table with eps estimates for next year from now, 1 month ago and three months ago
+    #ratings[3] table with eps estimates for next next year from now, 1 month ago and three months ago
 
+    EPSestimates = pd.read_html(str(soup5), attrs={'class' : 'table table--primary'})
+    #print(EPSestimates[0]) #EPS estimates for the next few years
+
+    Advice = pd.read_html(str(soup5), attrs={'class' : 'table table-primary align--left border--dotted'})
+    print(Advice)
 
 
 
