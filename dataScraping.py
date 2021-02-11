@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from typing import List
 from urllib.request import urlopen, Request
-import re
+#import re
 #import lxml
 
 def fundamentalInfoFVZ(soup) -> float:
@@ -151,6 +151,8 @@ def IncomeStatementMW(soup) -> float:
     if len(IncomeStatement.loc[IncomeStatement[0] == 'EBITDA EBITDA']) == 1:
         EBITDA = IncomeStatement.loc[IncomeStatement[0] == 'EBITDA EBITDA'][len(IncomeStatement.columns) - 2]
         EBITDA = EBITDA[int(EBITDA.index.values)] #We dont know what position it is in so we find out and take only that specific value
+        if EBITDA[0] == '(':
+            EBITDA = EBITDA[1:-1]
         if EBITDA[-1] == 'B':
             EBITDA = float(EBITDA[0:-1]) * 1000000000
         elif EBITDA[-1] == 'M':
@@ -159,6 +161,7 @@ def IncomeStatementMW(soup) -> float:
                 EBITDA = float(EBITDA[0:-1]) * 1000    
         elif EBITDA == '-':
             EBITDA = 0    
+
 
     #We check if the Depreciation and Amortization exists in the income statement, and then we isolate it and convert the number from millions
     DepreciationAmortization = 0
@@ -335,21 +338,15 @@ def CashFlow(soup) -> float:
         NetOperatingCashFlow = NetOperatingCashFlow[int(NetOperatingCashFlow.index.values)]
         #Since negative values come with parentesis , we check for those and then remove them
         if NetOperatingCashFlow[0] == '(':
-            NetOperatingCashFlow = NetOperatingCashFlow[1:-1] #We dont know what position it is in so we find out and take only that specific value
-            if NetOperatingCashFlow[-1] == 'B':
-                NetOperatingCashFlow = float(NetOperatingCashFlow[0:-1]) * -1000000000
-            elif NetOperatingCashFlow[-1] == 'M':
-                NetOperatingCashFlow = float(NetOperatingCashFlow[0:-1]) * -1000000   
-            elif NetOperatingCashFlow[-1] == 'K':
-                NetOperatingCashFlow = float(NetOperatingCashFlow[0:-1]) * -1000    
-        elif NetOperatingCashFlow[-1] == 'B':
+            NetOperatingCashFlow = NetOperatingCashFlow[1:-1] #We dont know what position it is in so we find out and take only that specific value  
+        if NetOperatingCashFlow[-1] == 'B':
             NetOperatingCashFlow = float(NetOperatingCashFlow[0:-1]) * 1000000000
         elif NetOperatingCashFlow[-1] == 'M':
             NetOperatingCashFlow = float(NetOperatingCashFlow[0:-1]) * 1000000   
         elif NetOperatingCashFlow[-1] == 'K':
                 NetOperatingCashFlow = float(NetOperatingCashFlow[0:-1]) * 1000           
         elif NetOperatingCashFlow == '-':
-            NetOperatingCashFlow = 0             
+            NetOperatingCashFlow = 0                    
 
     InvestingActivities = CashFlow[1]
     InvestingActivities.columns = pd.RangeIndex(0, len(InvestingActivities.columns)) #Indexing the columns as numbers so that the differences in the name of columns wont matter
@@ -367,14 +364,8 @@ def CashFlow(soup) -> float:
             DebtReduction = DebtReduction[int(DebtReduction.index.values)]
             #Since negative values come with parentesis , we check for those and then remove them
             if DebtReduction[0] == '(':
-                DebtReduction = DebtReduction[1:-1] #We dont know what position it is in so we find out and take only that specific value
-                if DebtReduction[-1] == 'B':
-                    DebtReduction = float(DebtReduction[0:-1]) * -1000000000
-                elif DebtReduction[-1] == 'M':
-                    DebtReduction = float(DebtReduction[0:-1]) * -1000000 
-                elif DebtReduction[-1] == 'K':
-                    DebtReduction = float(DebtReduction[0:-1]) * -1000        
-            elif DebtReduction[-1] == 'B':
+                DebtReduction = DebtReduction[1:-1] #We dont know what position it is in so we find out and take only that specific value       
+            if DebtReduction[-1] == 'B':
                 DebtReduction = float(DebtReduction[0:-1]) * 1000000000
             elif DebtReduction[-1] == 'M':
                 DebtReduction = float(DebtReduction[0:-1]) * 1000000 
@@ -391,14 +382,8 @@ def CashFlow(soup) -> float:
         FreeCashFlow = FreeCashFlow[int(FreeCashFlow.index.values)]
         #Since negative values come with parentesis , we check for those and then remove them
         if FreeCashFlow[0] == '(':
-            FreeCashFlow = FreeCashFlow[1:-1] #We dont know what position it is in so we find out and take only that specific value
-            if FreeCashFlow[-1] == 'B':
-                FreeCashFlow = float(FreeCashFlow[0:-1]) * -1000000000
-            elif FreeCashFlow[-1] == 'M':
-                FreeCashFlow = float(FreeCashFlow[0:-1]) * -1000000 
-            elif FreeCashFlow[-1] == 'K':
-                FreeCashFlow = float(FreeCashFlow[0:-1]) * -1000       
-        elif FreeCashFlow[-1] == 'B':
+            FreeCashFlow = FreeCashFlow[1:-1] #We dont know what position it is in so we find out and take only that specific value       
+        if FreeCashFlow[-1] == 'B':
             FreeCashFlow = float(FreeCashFlow[0:-1]) * 1000000000
         elif FreeCashFlow[-1] == 'M':
             FreeCashFlow = float(FreeCashFlow[0:-1]) * 1000000 
@@ -419,13 +404,29 @@ def EPSRevisions(soup) -> float:
     estimateRevision1 = 0
     for i in range(2, 0, -1):
         #We calculate the percentage change from one year to another and then average them out
-        estimateRevision1 += (float(firstYear[1][i - 1][1:]) * 100) / float(firstYear[1][i][1:]) - 100
-        
+        #Some values have a $ sign in the second position so we must supress it 
+        if firstYear[1][i][0] == '-' and firstYear[1][i - 1][0] == '-':
+            estimateRevision1 += (float(firstYear[1][i - 1][0] + firstYear[1][i - 1][2:] ) * 100) / float(firstYear[1][i][0] + firstYear[1][i][2:]) - 100
+        elif firstYear[1][i][0] == '-' and firstYear[1][i - 1][0] != '-':
+            estimateRevision1 += (float(firstYear[1][i - 1][1:] ) * 100) / float(firstYear[1][i][0] + firstYear[1][i][2:]) - 100
+        elif firstYear[1][i][0] != '-' and firstYear[1][i - 1][0] == '-':
+            estimateRevision1 += (float(firstYear[1][i - 1][0] + firstYear[1][i - 1][2:] ) * 100) / float(firstYear[1][i][1:]) - 100
+        elif firstYear[1][i][0] != '-' and firstYear[1][i - 1][0] != '-':
+            estimateRevision1 += (float(firstYear[1][i - 1][1:] ) * 100) / float(firstYear[1][i][1:]) - 100            
+
     secondYear = estimates[3] #EPS estimate for the year after next year revisions from 3 months ago 1 month ago and current 
     estimateRevision2 = 0
     for i in range(2, 0, -1):
-        #We calculate the percentage change of the revisions 
-        estimateRevision2 += (float(secondYear[1][i - 1][1:]) * 100) / float(secondYear[1][i][1:]) - 100
+        #We calculate the percentage change from one year to another and then average them out
+        #Some values have a $ sign in the second position so we must supress it 
+        if secondYear[1][i][0] == '-' and secondYear[1][i - 1][0] == '-':
+            estimateRevision2 += (float(secondYear[1][i - 1][0] + secondYear[1][i - 1][2:] ) * 100) / float(secondYear[1][i][0] + secondYear[1][i][2:]) - 100
+        elif secondYear[1][i][0] == '-' and secondYear[1][i - 1][0] != '-':
+            estimateRevision2 += (float(secondYear[1][i - 1][1:] ) * 100) / float(secondYear[1][i][0] + secondYear[1][i][2:]) - 100
+        elif secondYear[1][i][0] != '-' and secondYear[1][i - 1][0] == '-':
+            estimateRevision2 += (float(secondYear[1][i - 1][0] + secondYear[1][i - 1][2:] ) * 100) / float(secondYear[1][i][1:]) - 100
+        elif secondYear[1][i][0] != '-' and secondYear[1][i - 1][0] != '-':
+            estimateRevision2 += (float(secondYear[1][i - 1][1:] ) * 100) / float(secondYear[1][i][1:]) - 100   
 
     return estimateRevision1, estimateRevision2
 
@@ -436,9 +437,10 @@ def PriceTargets(soup) -> float:
     estimates = pd.read_html(str(soup), attrs={'class' : 'table value-pairs no-heading font--lato'})
 
     priceTargets = estimates[1]
-    HighTarget = float(priceTargets[1][0][1:])
-    LowTarget = float(priceTargets[1][2][1:])
-    AverageTarget = float(priceTargets[1][3][1:])
+    #We must check if it contains a , so that we can remove it
+    HighTarget = float(priceTargets[1][0][1:].replace(',', ''))     
+    LowTarget = float(priceTargets[1][2][1:].replace(',', ''))  
+    AverageTarget = float(priceTargets[1][3][1:].replace(',', ''))                
 
     Summary = estimates[0]
     NumberOfRatings = int(Summary[1][2])
@@ -458,12 +460,12 @@ def Recomendations(soup) -> int:
     #Transform the html to a pandas dataframe
     recom = pd.read_html(str(soup), attrs={'class' : 'table table-primary align--left border--dotted'})    
     #retieve info to create a bar chart, timeframes: current 1M ago 3M ago, Ratings: buy overweight hold underweight sell
-    print(recom)
+    #print(recom)
 
 
 def main ():
     
-    Ticker = 'dss'
+    Ticker = 'gff'
     url1 = 'http://finviz.com/quote.ashx?t=' + Ticker
     req1 = Request(url1, headers = {'User-Agent': 'Mozilla/5'}) #The website restricts urllib request so we must use request switching the user agent to mozilla 
     webpage_coded1 = urlopen(req1, timeout = 4).read() #We open the page and read all the raw info
