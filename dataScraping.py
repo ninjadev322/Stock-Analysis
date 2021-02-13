@@ -458,9 +458,38 @@ def EPSEstimates(soup):
 def Recomendations(soup) -> int:
     #We inspect the webpage to finde the html tags of the objects that we want
     #Transform the html to a pandas dataframe
-    recom = pd.read_html(str(soup), attrs={'class' : 'table table-primary align--left border--dotted'})    
-    #retieve info to create a bar chart, timeframes: current 1M ago 3M ago, Ratings: buy overweight hold underweight sell
-    #print(recom)
+    recom = pd.read_html(str(soup), attrs={'class' : 'table table-primary align--left border--dotted'})[0]  
+    recom = recom.dropna(axis = 1, how = 'any') #We take away any columns that have at least one Nan
+    
+    #We retrieve the name of the columns to later use them in the bar chart
+    columnNames = list(recom.columns[1:])
+    #Change the column index to numbers som that we can acces it
+    recom.columns = pd.RangeIndex(0, len(recom.columns))  
+    
+    #retrieve the values for the rows
+    xValues = []
+    for i in range(len(recom) - 1):
+        xValues += [recom[0][i]] 
+    
+    #We retrieve the values for each recomendation by accesing each row
+    #We dont know how many columns we will have because of the DropNa
+    Buy = []
+    for i in range(1, len(recom.loc[recom[0] == 'Buy'].columns)):
+        Buy += [int(recom.loc[recom[0] == 'Buy'][i][recom.loc[recom[0] == 'Buy'].index.values])]  
+    Overweight = []
+    for i in range(1, len(recom.loc[recom[0] == 'Overweight'].columns)):
+        Overweight += [int(recom.loc[recom[0] == 'Overweight'][i][recom.loc[recom[0] == 'Overweight'].index.values])]  
+    Hold = []
+    for i in range(1, len(recom.loc[recom[0] == 'Hold'].columns)):
+        Hold += [int(recom.loc[recom[0] == 'Hold'][i][recom.loc[recom[0] == 'Hold'].index.values])]  
+    Underweight = []
+    for i in range(1, len(recom.loc[recom[0] == 'Underweight'].columns)):
+        Underweight += [int(recom.loc[recom[0] == 'Underweight'][i][recom.loc[recom[0] == 'Underweight'].index.values])]  
+    Sell = []
+    for i in range(1, len(recom.loc[recom[0] == 'Sell'].columns)):
+        Sell += [int(recom.loc[recom[0] == 'Sell'][i][recom.loc[recom[0] == 'Sell'].index.values])]                        
+
+    return columnNames, xValues, Buy, Overweight, Hold, Underweight, Sell
 
 
 def main ():
@@ -474,7 +503,7 @@ def main ():
     soup1 = BeautifulSoup(webpage_coded1, 'html.parser') #Parsing(breaking the code down into relevant info) the html code
 
     ##################################################################################################################################################
-
+q
     url2 = 'https://www.marketwatch.com/investing/stock/' + Ticker + '/financials'
     req2 = Request(url2, headers = {'User-Agent': 'Mozilla/5'}) #The website restricts urllib request so we must use request switching the user agent to mozilla 
     webpage_coded2 = urlopen(req2, timeout = 4).read() #We open the page and read all the raw info
@@ -521,7 +550,7 @@ def main ():
 
     EPSestimates = EPSEstimates(soup5)
 
-    Recomendations(soup5)
+    columnNames, xValues, Buy, Overweight, Hold, Underweight, Sell = Recomendations(soup5)
 
 
 
