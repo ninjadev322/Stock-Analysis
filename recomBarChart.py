@@ -6,8 +6,7 @@
 # Version: 1.0
 #-----------------------------------------------------------------------
 
-#The objective of this code is to retrieve all the necessary information that we need by scraping different
-# webpages, so that we can later commence a full stock analysis with this info.
+#The objective of the code is to take alll the recommendation info from the datascraping file and visualize it with a bar chart
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -27,7 +26,7 @@ def mostRatings(Buy:List[int], Overweight:List[int], Hold:List[int], Underweight
 
 def main ():
 	#First we access to website with an url request
-	Ticker = 'aapl'
+	Ticker = 'sndr'
 	url5 = 'https://www.marketwatch.com/investing/stock/' + Ticker + '/analystestimates?mod=mw_quote_tab'
 	req5 = Request(url5, headers = {'User-Agent': 'Mozilla/5'}) #The website restricts urllib request so we must use request switching the user agent to mozilla 
 	webpage_coded5 = urlopen(req5, timeout = 4).read() #We open the page and read all the raw info

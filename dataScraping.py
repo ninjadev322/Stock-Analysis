@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from typing import List
 from urllib.request import urlopen, Request
+import math
 #import re
 #import lxml
 
@@ -209,7 +210,33 @@ def IncomeStatementMW(soup) -> float:
     if EBITDA != 0:
         EBIT = EBITDA - DepreciationAmortization
 
-    return RevenuePast5, RevenueGrowthPast5, EBITDA, EBIT, DepreciationAmortization, EPSpast5, EPSgrowthPast5
+    #We check if the InterestExpense exists in the income statement, and then we isolate it and convert the number from millions
+    InterestExpense = 0
+    if len(IncomeStatement.loc[IncomeStatement[0] == 'Interest Expense Interest Expense']) == 1:
+        InterestExpense = IncomeStatement.loc[IncomeStatement[0] == 'Interest Expense Interest Expense'][len(IncomeStatement.columns) - 2]
+        InterestExpense = InterestExpense[int(InterestExpense.index.values)] #We dont know what position it is in so we find out and take only that specific value
+        if InterestExpense[-1] == 'B':
+            InterestExpense = float(InterestExpense[0:-1]) * 1000000000
+        elif InterestExpense[-1] == 'M':
+            InterestExpense = float(InterestExpense[0:-1]) * 1000000 
+        elif InterestExpense[-1] == 'K':
+                InterestExpense = float(InterestExpense[0:-1]) * 1000    
+        elif InterestExpense == '-':
+            InterestExpense = 0   
+
+    if len(IncomeStatement.loc[IncomeStatement[0] == 'Interest Expense Interest Expense']) == 0 and len(IncomeStatement.loc[IncomeStatement[0] == 'Interest Expense, Net of Interest Capitalized Interest Expense, Net of Interest Capitalized']) == 1:              
+        InterestExpense = IncomeStatement.loc[IncomeStatement[0] == 'Interest Expense, Net of Interest Capitalized Interest Expense, Net of Interest Capitalized'][len(IncomeStatement.columns) - 2]
+        InterestExpense = InterestExpense[int(InterestExpense.index.values)] #We dont know what position it is in so we find out and take only that specific value
+        if InterestExpense[-1] == 'B':
+            InterestExpense = float(InterestExpense[0:-1]) * 1000000000
+        elif InterestExpense[-1] == 'M':
+            InterestExpense = float(InterestExpense[0:-1]) * 1000000 
+        elif InterestExpense[-1] == 'K':
+                InterestExpense = float(InterestExpense[0:-1]) * 1000    
+        elif InterestExpense == '-':
+            InterestExpense = 0
+
+    return RevenuePast5, RevenueGrowthPast5, EBITDA, EBIT, DepreciationAmortization, EPSpast5, EPSgrowthPast5, InterestExpense
 
 def BalanceSheet(soup) -> float:
     #We inspect the webpage to finde the html tags of the objects that we want
@@ -317,7 +344,7 @@ def BalanceSheet(soup) -> float:
         LongTermAssets = TotalAssets - TotalCurrentAssets
 
     LongTermLiabilities = 0    
-    if LongTermLiabilities != 0:
+    if TotalLiabilities != 0:
         LongTermLiabilities = TotalLiabilities - TotalCurrentLiabilities        
 
     return TotalEquity, GrowthLA, TotalLiabilities, TotalCurrentLiabilities, LongTermLiabilities, TotalAssets, TotalCurrentAssets, LongTermAssets             
@@ -404,29 +431,33 @@ def EPSRevisions(soup) -> float:
     estimateRevision1 = 0
     for i in range(2, 0, -1):
         #We calculate the percentage change from one year to another and then average them out
-        #Some values have a $ sign in the second position so we must supress it 
-        if firstYear[1][i][0] == '-' and firstYear[1][i - 1][0] == '-':
-            estimateRevision1 += (float(firstYear[1][i - 1][0] + firstYear[1][i - 1][2:] ) * 100) / float(firstYear[1][i][0] + firstYear[1][i][2:]) - 100
-        elif firstYear[1][i][0] == '-' and firstYear[1][i - 1][0] != '-':
-            estimateRevision1 += (float(firstYear[1][i - 1][1:] ) * 100) / float(firstYear[1][i][0] + firstYear[1][i][2:]) - 100
-        elif firstYear[1][i][0] != '-' and firstYear[1][i - 1][0] == '-':
-            estimateRevision1 += (float(firstYear[1][i - 1][0] + firstYear[1][i - 1][2:] ) * 100) / float(firstYear[1][i][1:]) - 100
-        elif firstYear[1][i][0] != '-' and firstYear[1][i - 1][0] != '-':
-            estimateRevision1 += (float(firstYear[1][i - 1][1:] ) * 100) / float(firstYear[1][i][1:]) - 100            
+        #but first we must check for Nan as we can not work with this
+        if str(firstYear[1][i]) != 'NaN' and firstYear[1][i] != 'NaN' :
+            #Some values have a $ sign in the second position so we must supress it 
+            if firstYear[1][i][0] == '-' and firstYear[1][i - 1][0] == '-':
+                estimateRevision1 += (float(firstYear[1][i - 1][0] + firstYear[1][i - 1][2:] ) * 100) / float(firstYear[1][i][0] + firstYear[1][i][2:]) - 100
+            elif firstYear[1][i][0] == '-' and firstYear[1][i - 1][0] != '-':
+                estimateRevision1 += (float(firstYear[1][i - 1][1:] ) * 100) / float(firstYear[1][i][0] + firstYear[1][i][2:]) - 100
+            elif firstYear[1][i][0] != '-' and firstYear[1][i - 1][0] == '-':
+                estimateRevision1 += (float(firstYear[1][i - 1][0] + firstYear[1][i - 1][2:] ) * 100) / float(firstYear[1][i][1:]) - 100
+            elif firstYear[1][i][0] != '-' and firstYear[1][i - 1][0] != '-':
+                estimateRevision1 += (float(firstYear[1][i - 1][1:] ) * 100) / float(firstYear[1][i][1:]) - 100            
 
     secondYear = estimates[3] #EPS estimate for the year after next year revisions from 3 months ago 1 month ago and current 
     estimateRevision2 = 0
     for i in range(2, 0, -1):
         #We calculate the percentage change from one year to another and then average them out
-        #Some values have a $ sign in the second position so we must supress it 
-        if secondYear[1][i][0] == '-' and secondYear[1][i - 1][0] == '-':
-            estimateRevision2 += (float(secondYear[1][i - 1][0] + secondYear[1][i - 1][2:] ) * 100) / float(secondYear[1][i][0] + secondYear[1][i][2:]) - 100
-        elif secondYear[1][i][0] == '-' and secondYear[1][i - 1][0] != '-':
-            estimateRevision2 += (float(secondYear[1][i - 1][1:] ) * 100) / float(secondYear[1][i][0] + secondYear[1][i][2:]) - 100
-        elif secondYear[1][i][0] != '-' and secondYear[1][i - 1][0] == '-':
-            estimateRevision2 += (float(secondYear[1][i - 1][0] + secondYear[1][i - 1][2:] ) * 100) / float(secondYear[1][i][1:]) - 100
-        elif secondYear[1][i][0] != '-' and secondYear[1][i - 1][0] != '-':
-            estimateRevision2 += (float(secondYear[1][i - 1][1:] ) * 100) / float(secondYear[1][i][1:]) - 100   
+        #but first we must check for Nan as we can not work with this
+        if str(secondYear[1][i]) != 'NaN' and str(secondYear[1][i-1]) != 'NaN':
+            #Some values have a $ sign in the second position so we must supress it 
+            if secondYear[1][i][0] == '-' and secondYear[1][i - 1][0] == '-':
+                estimateRevision2 += (float(secondYear[1][i - 1][0] + secondYear[1][i - 1][2:] ) * 100) / float(secondYear[1][i][0] + secondYear[1][i][2:]) - 100
+            elif secondYear[1][i][0] == '-' and secondYear[1][i - 1][0] != '-':
+                estimateRevision2 += (float(secondYear[1][i - 1][1:] ) * 100) / float(secondYear[1][i][0] + secondYear[1][i][2:]) - 100
+            elif secondYear[1][i][0] != '-' and secondYear[1][i - 1][0] == '-':
+                estimateRevision2 += (float(secondYear[1][i - 1][0] + secondYear[1][i - 1][2:] ) * 100) / float(secondYear[1][i][1:]) - 100
+            elif secondYear[1][i][0] != '-' and secondYear[1][i - 1][0] != '-':
+                estimateRevision2 += (float(secondYear[1][i - 1][1:] ) * 100) / float(secondYear[1][i][1:]) - 100   
 
     return estimateRevision1, estimateRevision2
 
@@ -503,7 +534,7 @@ def main ():
     soup1 = BeautifulSoup(webpage_coded1, 'html.parser') #Parsing(breaking the code down into relevant info) the html code
 
     ##################################################################################################################################################
-q
+
     url2 = 'https://www.marketwatch.com/investing/stock/' + Ticker + '/financials'
     req2 = Request(url2, headers = {'User-Agent': 'Mozilla/5'}) #The website restricts urllib request so we must use request switching the user agent to mozilla 
     webpage_coded2 = urlopen(req2, timeout = 4).read() #We open the page and read all the raw info
@@ -541,7 +572,7 @@ q
 
     PE, PEG, PS, PB, MarketCap, DebtEquity, Recom, InsiderTrans, InstitutionTrans, ROA, ROE, AvgVolume, Price, LastChange, PerfWeek, PerfMonth, PerfYear, YearHighPercent, EPSNextY, EPSNext5Y = fundamentalInfoFVZ(soup1)
 
-    RevenuePast5, RevenueGrowthPast5, EBITDA, EBIT, DepreciationAmortization, EPSpast5, EPSgrowthPast5 = IncomeStatementMW(soup2)
+    RevenuePast5, RevenueGrowthPast5, EBITDA, EBIT, DepreciationAmortization, EPSpast5, EPSgrowthPast5, InterestExpense = IncomeStatementMW(soup2)
     TotalEquity, GrowthLA, TotalLiabilities, TotalCurrentLiabilities, LongTermLiabilities, TotalAssets, TotalCurrentAssets, LongTermAssets = BalanceSheet(soup3)
     FreeCashFlow, TotalDebtReduction, NetOperatingCashFlow = CashFlow(soup4)
 
