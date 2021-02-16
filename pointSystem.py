@@ -15,7 +15,7 @@ import numpy as np
 from typing import List
 from dataScraping import *
 
-def health(DebtEquity:float, LongTermLiabilities:float, FreeCashFlow:float, EBIT:float, InterestExpense:float, TotalCurrentAssets:float, TotalCurrentLiabilities:float, TotalLiabilities:float, GrowthLA:float, TotalEquity:float, TotalpointsValuation = 0, pointsEarnedValuation = 0) -> int:
+def health(DebtEquity:float, LongTermLiabilities:float, FreeCashFlow:float, EBIT:float, InterestExpense:float, TotalCurrentAssets:float, TotalCurrentLiabilities:float, TotalLiabilities:float, GrowthLA:float, TotalEquity:float, TotalpointsHealth = 0, pointsEarnedHealth = 0) -> int:
 	#We evaluate each parameter and add points if it meets the criteria
 	#2 points if it is below 0.8 and 3 if it is below 0.4
 	DebtEquity = float(DebtEquity)
@@ -23,12 +23,12 @@ def health(DebtEquity:float, LongTermLiabilities:float, FreeCashFlow:float, EBIT
 		DebtEquity = TotalLiabilities / TotalEquity
 	if DebtEquity != 0:
 		if DebtEquity <= 0.4:
-			pointsEarnedValuation += 5
+			pointsEarnedHealth += 5
 			print(11)
 		elif 0.4 < DebtEquity <= 0.8:
-			pointsEarnedValuation += 3
+			pointsEarnedHealth += 3
 			print(12)
-		TotalpointsValuation += 5		
+		TotalpointsHealth += 5		
 	else:
 		print('Not sufficient Data for Debt/Equity Ratio')
 
@@ -37,9 +37,9 @@ def health(DebtEquity:float, LongTermLiabilities:float, FreeCashFlow:float, EBIT
 		#Calculate ratio
 		RatioLE = InterestExpense / EBIT
 		if RatioLE <= 0.33:
-			pointsEarnedValuation += 3
+			pointsEarnedHealth += 2
 			print(2)
-		TotalpointsValuation += 3
+		TotalpointsHealth += 2
 	else:
 		print('Not sufficient Data for EBIT and Interest Expense')	
 
@@ -48,12 +48,12 @@ def health(DebtEquity:float, LongTermLiabilities:float, FreeCashFlow:float, EBIT
 		#Calculate ratio
 		RatioFL = FreeCashFlow / TotalLiabilities
 		if RatioFL >= 1:
-			pointsEarnedValuation += 5
+			pointsEarnedHealth += 5
 			print(31)
 		elif 0.25 <= RatioFL < 1:
-			pointsEarnedValuation += 3
+			pointsEarnedHealth += 3
 			print(32)
-		TotalpointsValuation += 5
+		TotalpointsHealth += 5
 	else:
 		print('Not sufficient Data for Free Cash Flow and Total Liabilities')		
 
@@ -61,9 +61,9 @@ def health(DebtEquity:float, LongTermLiabilities:float, FreeCashFlow:float, EBIT
 		#Calculate Ratio
 		RatioLA = TotalCurrentLiabilities / TotalCurrentAssets	
 		if RatioLA < 1:
-			pointsEarnedValuation += 3
+			pointsEarnedHealth += 3
 			print(4)
-		TotalpointsValuation += 3
+		TotalpointsHealth += 3
 	else:
 		print('Not sufficient Data for Total Current Assets and Total Current Liabilities')		
 
@@ -72,33 +72,33 @@ def health(DebtEquity:float, LongTermLiabilities:float, FreeCashFlow:float, EBIT
 		#Calculate Ratio
 		RatioLA2 = LongTermLiabilities / TotalCurrentAssets
 		if RatioLA2 <= 1:
-			pointsEarnedValuation += 5
+			pointsEarnedHealth += 5
 			print(51)
 		elif 1 < RatioLA2 <= 1.25:
-			pointsEarnedValuation += 2
+			pointsEarnedHealth += 2
 			print(52)
-		TotalpointsValuation += 5	
+		TotalpointsHealth += 5	
 	else:
 		print('Not sufficient Data for Total Current Assets and Long Term Liabilities')	
 	
 	#3 points if there has been debt reduction in the last few years	
 	if GrowthLA != 0:
 		if GrowthLA > 0:
-			pointsEarnedValuation += 2
+			pointsEarnedHealth += 2
 			print(6)
-		TotalpointsValuation += 2
+		TotalpointsHealth += 2
 	else:
 		print('Not sufficient Data for Liabilities/Assets Ratio Growth')
 
-	print(pointsEarnedValuation)
-	print(TotalpointsValuation)
+	print(pointsEarnedHealth)
+	print(TotalpointsHealth)
 
-	return pointsEarnedValuation, TotalpointsValuation	
+	return pointsEarnedHealth, TotalpointsHealth	
 
 
 def  main ():
 
-	Ticker = 'ebf'
+	Ticker = str(input('Ticker: '))
 	url1 = 'http://finviz.com/quote.ashx?t=' + Ticker
 	req1 = Request(url1, headers = {'User-Agent': 'Mozilla/5'}) #The website restricts urllib request so we must use request switching the user agent to mozilla 
 	webpage_coded1 = urlopen(req1, timeout = 4).read() #We open the page and read all the raw info
@@ -160,7 +160,7 @@ def  main ():
     ############################################################################################################################################
     ############################################################################################################################################
 
-	pointsEarnedValuation, TotalpointsValuation = health(DebtEquity, LongTermLiabilities, FreeCashFlow, EBIT, InterestExpense, TotalCurrentAssets, TotalCurrentLiabilities, TotalLiabilities, GrowthLA, TotalEquity)
+	pointsEarnedHealth, TotalpointsHealth = health(DebtEquity, LongTermLiabilities, FreeCashFlow, EBIT, InterestExpense, TotalCurrentAssets, TotalCurrentLiabilities, TotalLiabilities, GrowthLA, TotalEquity)
 
 
 

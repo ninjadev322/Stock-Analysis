@@ -252,7 +252,10 @@ def BalanceSheet(soup) -> float:
     if len(Assets.loc[Assets[0] == 'Total Assets Total Assets']) == 1:
         TotalAssets = Assets.loc[Assets[0] == 'Total Assets Total Assets'][len(Assets.columns) - 2]
         TotalAssets = TotalAssets[int(TotalAssets.index.values)] #We dont know what position it is in so we find out and take only that specific value
-        if TotalAssets[-1] == 'B':
+        #Some companies have assets in the trillions so we must convert it
+        if TotalAssets[-1] == 'T':
+            TotalAssets = float(TotalAssets[0:-1]) * 1000000000000
+        elif TotalAssets[-1] == 'B':
             TotalAssets = float(TotalAssets[0:-1]) * 1000000000
         elif TotalAssets[-1] == 'M':
             TotalAssets = float(TotalAssets[0:-1]) * 1000000 
@@ -299,7 +302,10 @@ def BalanceSheet(soup) -> float:
     if len(Liabilities.loc[Liabilities[0] == 'Total Liabilities Total Liabilities']) == 1:
         TotalLiabilities = Liabilities.loc[Liabilities[0] == 'Total Liabilities Total Liabilities'][len(Liabilities.columns) - 2]
         TotalLiabilities = TotalLiabilities[int(TotalLiabilities.index.values)] #We dont know what position it is in so we find out and take only that specific value
-        if TotalLiabilities[-1] == 'B':
+        #Some companies have liabilities in the trillions so we must convert it
+        if TotalLiabilities[-1] == 'T':
+            TotalLiabilities = float(TotalLiabilities[0:-1]) * 1000000000000
+        elif TotalLiabilities[-1] == 'B':
             TotalLiabilities = float(TotalLiabilities[0:-1]) * 1000000000
         elif TotalLiabilities[-1] == 'M':
             TotalLiabilities = float(TotalLiabilities[0:-1]) * 1000000   
@@ -432,7 +438,9 @@ def EPSRevisions(soup) -> float:
     for i in range(2, 0, -1):
         #We calculate the percentage change from one year to another and then average them out
         #but first we must check for Nan as we can not work with this
-        if str(firstYear[1][i]) != 'NaN' and firstYear[1][i] != 'NaN' :
+        try:
+            len(firstYear[1][i]) 
+            len(firstYear[1][i - 1])
             #Some values have a $ sign in the second position so we must supress it 
             if firstYear[1][i][0] == '-' and firstYear[1][i - 1][0] == '-':
                 estimateRevision1 += (float(firstYear[1][i - 1][0] + firstYear[1][i - 1][2:] ) * 100) / float(firstYear[1][i][0] + firstYear[1][i][2:]) - 100
@@ -442,13 +450,17 @@ def EPSRevisions(soup) -> float:
                 estimateRevision1 += (float(firstYear[1][i - 1][0] + firstYear[1][i - 1][2:] ) * 100) / float(firstYear[1][i][1:]) - 100
             elif firstYear[1][i][0] != '-' and firstYear[1][i - 1][0] != '-':
                 estimateRevision1 += (float(firstYear[1][i - 1][1:] ) * 100) / float(firstYear[1][i][1:]) - 100            
+        except:
+            None
 
     secondYear = estimates[3] #EPS estimate for the year after next year revisions from 3 months ago 1 month ago and current 
     estimateRevision2 = 0
     for i in range(2, 0, -1):
         #We calculate the percentage change from one year to another and then average them out
         #but first we must check for Nan as we can not work with this
-        if str(secondYear[1][i]) != 'NaN' and str(secondYear[1][i-1]) != 'NaN':
+        try:
+            len(secondYear[1][i]) 
+            len(secondYear[1][i - 1]) 
             #Some values have a $ sign in the second position so we must supress it 
             if secondYear[1][i][0] == '-' and secondYear[1][i - 1][0] == '-':
                 estimateRevision2 += (float(secondYear[1][i - 1][0] + secondYear[1][i - 1][2:] ) * 100) / float(secondYear[1][i][0] + secondYear[1][i][2:]) - 100
@@ -458,7 +470,8 @@ def EPSRevisions(soup) -> float:
                 estimateRevision2 += (float(secondYear[1][i - 1][0] + secondYear[1][i - 1][2:] ) * 100) / float(secondYear[1][i][1:]) - 100
             elif secondYear[1][i][0] != '-' and secondYear[1][i - 1][0] != '-':
                 estimateRevision2 += (float(secondYear[1][i - 1][1:] ) * 100) / float(secondYear[1][i][1:]) - 100   
-
+        except:
+            None
     return estimateRevision1, estimateRevision2
 
 def PriceTargets(soup) -> float:
@@ -525,7 +538,7 @@ def Recomendations(soup) -> int:
 
 def main ():
     
-    Ticker = 'gff'
+    Ticker = str(input('Ticker: '))
     url1 = 'http://finviz.com/quote.ashx?t=' + Ticker
     req1 = Request(url1, headers = {'User-Agent': 'Mozilla/5'}) #The website restricts urllib request so we must use request switching the user agent to mozilla 
     webpage_coded1 = urlopen(req1, timeout = 4).read() #We open the page and read all the raw info
