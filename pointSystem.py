@@ -15,12 +15,15 @@ import numpy as np
 from typing import List
 from dataScraping import *
 
-def health(DebtEquity:float, LongTermLiabilities:float, FreeCashFlow:float, EBIT:float, InterestExpense:float, TotalCurrentAssets:float, TotalCurrentLiabilities:float, TotalLiabilities:float, GrowthLA:float, TotalEquity:float, TotalpointsHealth = 0, pointsEarnedHealth = 0) -> int:
+def health(DebtEquity:float, LongTermLiabilities:float, NetOperatingCashFlow:float, EBIT:float, InterestExpense:float, TotalCurrentAssets:float, TotalCurrentLiabilities:float, TotalLiabilities:float, GrowthLA:float, TotalEquity:float, ShortTermDebt:float, LongTermDebt:float, TotalDebtReduction:float, GrowthDA:float, TotalAssets:float, TotalpointsHealth = 0, pointsEarnedHealth = 0) -> int:
 	#We evaluate each parameter and add points if it meets the criteria
 	#2 points if it is below 0.8 and 3 if it is below 0.4
 	DebtEquity = float(DebtEquity)
 	if DebtEquity == 0:
-		DebtEquity = TotalLiabilities / TotalEquity
+		#to redefinde Debt/Equity Ratio first we must make sure that total equity is not zero so that we dont have an error
+		if TotalEquity != 0:
+			DebtEquity = (LongTermDebt + ShortTermDebt) / TotalEquity
+	#We check to see if it is correct, redefined or not
 	if DebtEquity != 0:
 		if DebtEquity <= 0.4:
 			pointsEarnedHealth += 5
@@ -44,18 +47,21 @@ def health(DebtEquity:float, LongTermLiabilities:float, FreeCashFlow:float, EBIT
 		print('Not sufficient Data for EBIT and Interest Expense')	
 
 	#3 points if free cash flow covers half of total liabilities and 2 points if it covers all if it
-	if FreeCashFlow != 0 and TotalLiabilities != 0:
+	if NetOperatingCashFlow != 0 and LongTermDebt != 0:
 		#Calculate ratio
-		RatioFL = FreeCashFlow / TotalLiabilities
-		if RatioFL >= 1:
-			pointsEarnedHealth += 5
+		RatioFD = NetOperatingCashFlow / (LongTermDebt + ShortTermDebt)
+		if RatioFD >= 1:
+			pointsEarnedHealth += 2
 			print(31)
-		elif 0.25 <= RatioFL < 1:
-			pointsEarnedHealth += 3
+		elif 0.5 <= RatioFD < 1:
+			pointsEarnedHealth += 2
 			print(32)
+		elif 0.25 <= RatioFD < 0.5:
+			pointsEarnedHealth += 1
+			print(33)	
 		TotalpointsHealth += 5
 	else:
-		print('Not sufficient Data for Free Cash Flow and Total Liabilities')		
+		print('Not sufficient Data for Net Operating Cash Flow and Total Liabilities')		
 
 	if TotalCurrentAssets != 0 and TotalCurrentLiabilities != 0:
 		#Calculate Ratio
@@ -80,16 +86,42 @@ def health(DebtEquity:float, LongTermLiabilities:float, FreeCashFlow:float, EBIT
 		TotalpointsHealth += 5	
 	else:
 		print('Not sufficient Data for Total Current Assets and Long Term Liabilities')	
-	
-	#3 points if there has been debt reduction in the last few years	
+
+	if TotalCurrentAssets == 0 or TotalCurrentLiabilities == 0 or LongTermLiabilities == 0:
+		if TotalAssets != 0 and TotalLiabilities != 0:
+			RatioLA3 = (TotalLiabilities + TotalEquity) / TotalAssets
+			if RatioLA3 > 1:
+				print(54)
+				pointsEarnedHealth += 2
+			TotalpointsHealth += 2
+		else:
+			print('Not sufficient Data for Total Assets and Total Liabilities')		
+
+	#2 points if liabilities/assets ratio has been reduced in the last few years	
 	if GrowthLA != 0:
 		if GrowthLA > 0:
 			pointsEarnedHealth += 2
-			print(6)
+			print(61)
 		TotalpointsHealth += 2
 	else:
-		print('Not sufficient Data for Liabilities/Assets Ratio Growth')
+		#if the LA ratio isnt available we opt for the DA ratio
+		#2 points if debt/assets ratio has reduced in the last few years
+		if GrowthDA != 0:
+			if GrowthDA < 0:
+				pointsEarnedHealth += 2
+				print(62)
+		TotalpointsHealth += 2
+		if GrowthDA == 0:
+			print('Not sufficient Data for Liabilities/Assets Ratio Growth or Debt/Assets Ratio Growth')
 
+	if TotalDebtReduction != 0:
+		if TotalDebtReduction > 0:
+			pointsEarnedHealth += 3
+			print(7)
+		TotalpointsHealth += 3
+	else:
+		print('Not sufficient Data for Debt Reduction')			
+	
 	print(pointsEarnedHealth)
 	print(TotalpointsHealth)
 
@@ -146,7 +178,7 @@ def  main ():
 	PE, PEG, PS, PB, MarketCap, DebtEquity, Recom, InsiderTrans, InstitutionTrans, ROA, ROE, AvgVolume, Price, LastChange, PerfWeek, PerfMonth, PerfYear, YearHighPercent, EPSNextY, EPSNext5Y = fundamentalInfoFVZ(soup1)
 
 	RevenuePast5, RevenueGrowthPast5, EBITDA, EBIT, DepreciationAmortization, EPSpast5, EPSgrowthPast5, InterestExpense = IncomeStatementMW(soup2)
-	TotalEquity, GrowthLA, TotalLiabilities, TotalCurrentLiabilities, LongTermLiabilities, TotalAssets, TotalCurrentAssets, LongTermAssets = BalanceSheet(soup3)
+	TotalEquity, GrowthLA, GrowthDA, TotalLiabilities, TotalCurrentLiabilities, LongTermLiabilities, TotalAssets, TotalCurrentAssets, LongTermAssets, ShortTermDebt, LongTermDebt = BalanceSheet(soup3)
 	FreeCashFlow, TotalDebtReduction, NetOperatingCashFlow = CashFlow(soup4)
 
 	estimateRevision1, estimateRevision2 = EPSRevisions(soup5)
@@ -160,7 +192,7 @@ def  main ():
     ############################################################################################################################################
     ############################################################################################################################################
 
-	pointsEarnedHealth, TotalpointsHealth = health(DebtEquity, LongTermLiabilities, FreeCashFlow, EBIT, InterestExpense, TotalCurrentAssets, TotalCurrentLiabilities, TotalLiabilities, GrowthLA, TotalEquity)
+	pointsEarnedHealth, TotalpointsHealth = health(DebtEquity, LongTermLiabilities, NetOperatingCashFlow, EBIT, InterestExpense, TotalCurrentAssets, TotalCurrentLiabilities, TotalLiabilities, GrowthLA, TotalEquity, ShortTermDebt, LongTermDebt, TotalDebtReduction, GrowthDA, TotalAssets)
 
 
 

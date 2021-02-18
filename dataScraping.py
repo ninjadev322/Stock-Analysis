@@ -153,7 +153,7 @@ def IncomeStatementMW(soup) -> float:
         EBITDA = IncomeStatement.loc[IncomeStatement[0] == 'EBITDA EBITDA'][len(IncomeStatement.columns) - 2]
         EBITDA = EBITDA[int(EBITDA.index.values)] #We dont know what position it is in so we find out and take only that specific value
         if EBITDA[0] == '(':
-            EBITDA = EBITDA[1:-1]
+            EBITDA = '-' + EBITDA[1:-1]
         if EBITDA[-1] == 'B':
             EBITDA = float(EBITDA[0:-1]) * 1000000000
         elif EBITDA[-1] == 'M':
@@ -209,7 +209,20 @@ def IncomeStatementMW(soup) -> float:
     EBIT = 0    
     if EBITDA != 0:
         EBIT = EBITDA - DepreciationAmortization
-
+    #sometimes EBITDA doesnt exist(Insurance companies) and EBIT is equal to Operating income before interest expense and taxes
+    else:  
+        if len(IncomeStatement.loc[IncomeStatement[0] == 'Operating Income Before Interest Expense Operating Income Before Interest Expense']) == 1:
+            EBIT = IncomeStatement.loc[IncomeStatement[0] == 'Operating Income Before Interest Expense Operating Income Before Interest Expense'][len(IncomeStatement.columns) - 2]
+            EBIT = EBIT[int(EBIT.index.values)] #We dont know what position it is in so we find out and take only that specific value
+            if EBIT[-1] == 'B':
+                EBIT = float(EBIT[0:-1]) * 1000000000
+            elif EBIT[-1] == 'M':
+                EBIT = float(EBIT[0:-1]) * 1000000 
+            elif EBIT[-1] == 'K':
+                    EBIT = float(EBIT[0:-1]) * 1000    
+            elif EBIT == '-':
+                EBIT = 0 
+            
     #We check if the InterestExpense exists in the income statement, and then we isolate it and convert the number from millions
     InterestExpense = 0
     if len(IncomeStatement.loc[IncomeStatement[0] == 'Interest Expense Interest Expense']) == 1:
@@ -223,18 +236,19 @@ def IncomeStatementMW(soup) -> float:
                 InterestExpense = float(InterestExpense[0:-1]) * 1000    
         elif InterestExpense == '-':
             InterestExpense = 0   
-
-    if len(IncomeStatement.loc[IncomeStatement[0] == 'Interest Expense Interest Expense']) == 0 and len(IncomeStatement.loc[IncomeStatement[0] == 'Interest Expense, Net of Interest Capitalized Interest Expense, Net of Interest Capitalized']) == 1:              
-        InterestExpense = IncomeStatement.loc[IncomeStatement[0] == 'Interest Expense, Net of Interest Capitalized Interest Expense, Net of Interest Capitalized'][len(IncomeStatement.columns) - 2]
-        InterestExpense = InterestExpense[int(InterestExpense.index.values)] #We dont know what position it is in so we find out and take only that specific value
-        if InterestExpense[-1] == 'B':
-            InterestExpense = float(InterestExpense[0:-1]) * 1000000000
-        elif InterestExpense[-1] == 'M':
-            InterestExpense = float(InterestExpense[0:-1]) * 1000000 
-        elif InterestExpense[-1] == 'K':
-                InterestExpense = float(InterestExpense[0:-1]) * 1000    
-        elif InterestExpense == '-':
-            InterestExpense = 0
+    #We make sure that interest expense is not named in another name(happens with insurance companies)
+    else:
+        if len(IncomeStatement.loc[IncomeStatement[0] == 'Interest Expense (excl. Interest Capitalized) Interest Expense (excl. Interest Capitalized)']) == 1:              
+            InterestExpense = IncomeStatement.loc[IncomeStatement[0] == 'Interest Expense (excl. Interest Capitalized) Interest Expense (excl. Interest Capitalized)'][len(IncomeStatement.columns) - 2]
+            InterestExpense = InterestExpense[int(InterestExpense.index.values)] #We dont know what position it is in so we find out and take only that specific value
+            if InterestExpense[-1] == 'B':
+                InterestExpense = float(InterestExpense[0:-1]) * 1000000000
+            elif InterestExpense[-1] == 'M':
+                InterestExpense = float(InterestExpense[0:-1]) * 1000000 
+            elif InterestExpense[-1] == 'K':
+                    InterestExpense = float(InterestExpense[0:-1]) * 1000    
+            elif InterestExpense == '-':
+                InterestExpense = 0
 
     return RevenuePast5, RevenueGrowthPast5, EBITDA, EBIT, DepreciationAmortization, EPSpast5, EPSgrowthPast5, InterestExpense
 
@@ -330,6 +344,22 @@ def BalanceSheet(soup) -> float:
     if count != 0:   
         GrowthLA = GrowthLA / count
 
+    #First we retrieve the Debt to assets ratio of the past 5 years 
+    RatioDA = []
+    count = 0
+    if len(Liabilities.loc[Liabilities[0] == 'Total Debt / Total Assets Total Debt / Total Assets']) == 1:       
+        for i in range(1,len(Liabilities.columns) - 1):
+            DA = Liabilities.loc[Liabilities[0] == 'Total Debt / Total Assets Total Debt / Total Assets'][i]
+            if DA[int(DA.index.values)] != '-':
+                RatioDA += [float(DA[int(DA.index.values)][0:-1])]
+    #Now we calculate the growth of this ratio year over year            
+    GrowthDA = 0            
+    for i in range(1, len(RatioDA)):
+        GrowthDA += (RatioDA[i] - RatioDA[i-1])
+        count += 1
+    if count != 0:   
+        GrowthDA = GrowthDA / count       
+
     #We check if the Total Equity exists in the income statement, and then we isolate it and convert the number from millions or billions        
     TotalEquity = 0
     if len(Liabilities.loc[Liabilities[0] == 'Total Equity Total Equity']) == 1:
@@ -344,6 +374,34 @@ def BalanceSheet(soup) -> float:
         elif TotalEquity == '-':
             TotalEquity = 0
 
+    #We check if Short Term Debt exists in the income statement, and then we isolate it and convert the number from millions or billions        
+    ShortTermDebt = 0
+    if len(Liabilities.loc[Liabilities[0] == 'Short Term Debt Short Term Debt']) == 1:
+        ShortTermDebt = Liabilities.loc[Liabilities[0] == 'Short Term Debt Short Term Debt'][len(Liabilities.columns) - 2]
+        ShortTermDebt = ShortTermDebt[int(ShortTermDebt.index.values)] #We dont know what position it is in so we find out and take only that specific value
+        if ShortTermDebt[-1] == 'B':
+            ShortTermDebt = float(ShortTermDebt[0:-1]) * 1000000000
+        elif ShortTermDebt[-1] == 'M':
+            ShortTermDebt = float(ShortTermDebt[0:-1]) * 1000000   
+        elif ShortTermDebt[-1] == 'K':
+                ShortTermDebt = float(ShortTermDebt[0:-1]) * 1000    
+        elif ShortTermDebt == '-':
+            ShortTermDebt = 0
+
+    #We check if the Long Term Debt exists in the income statement, and then we isolate it and convert the number from millions or billions        
+    LongTermDebt = 0
+    if len(Liabilities.loc[Liabilities[0] == 'Long-Term Debt Long-Term Debt']) == 1:
+        LongTermDebt = Liabilities.loc[Liabilities[0] == 'Long-Term Debt Long-Term Debt'][len(Liabilities.columns) - 2]
+        LongTermDebt = LongTermDebt[int(LongTermDebt.index.values)] #We dont know what position it is in so we find out and take only that specific value
+        if LongTermDebt[-1] == 'B':
+            LongTermDebt = float(LongTermDebt[0:-1]) * 1000000000
+        elif LongTermDebt[-1] == 'M':
+            LongTermDebt = float(LongTermDebt[0:-1]) * 1000000   
+        elif LongTermDebt[-1] == 'K':
+                LongTermDebt = float(LongTermDebt[0:-1]) * 1000    
+        elif LongTermDebt == '-':
+            LongTermDebt = 0                     
+
     #We calculate the long term assets and liabilities with the difference of other two metrics but first we must make sure that these exist        
     LongTermAssets = 0
     if TotalAssets != 0:        
@@ -353,7 +411,7 @@ def BalanceSheet(soup) -> float:
     if TotalLiabilities != 0:
         LongTermLiabilities = TotalLiabilities - TotalCurrentLiabilities        
 
-    return TotalEquity, GrowthLA, TotalLiabilities, TotalCurrentLiabilities, LongTermLiabilities, TotalAssets, TotalCurrentAssets, LongTermAssets             
+    return TotalEquity, GrowthLA, GrowthDA, TotalLiabilities, TotalCurrentLiabilities, LongTermLiabilities, TotalAssets, TotalCurrentAssets, LongTermAssets, ShortTermDebt, LongTermDebt             
             
 def CashFlow(soup) -> float:
     #We inspect the webpage to finde the html tags of the objects that we want
@@ -371,7 +429,7 @@ def CashFlow(soup) -> float:
         NetOperatingCashFlow = NetOperatingCashFlow[int(NetOperatingCashFlow.index.values)]
         #Since negative values come with parentesis , we check for those and then remove them
         if NetOperatingCashFlow[0] == '(':
-            NetOperatingCashFlow = NetOperatingCashFlow[1:-1] #We dont know what position it is in so we find out and take only that specific value  
+            NetOperatingCashFlow = '-' + NetOperatingCashFlow[1:-1] #We dont know what position it is in so we find out and take only that specific value  
         if NetOperatingCashFlow[-1] == 'B':
             NetOperatingCashFlow = float(NetOperatingCashFlow[0:-1]) * 1000000000
         elif NetOperatingCashFlow[-1] == 'M':
@@ -397,7 +455,7 @@ def CashFlow(soup) -> float:
             DebtReduction = DebtReduction[int(DebtReduction.index.values)]
             #Since negative values come with parentesis , we check for those and then remove them
             if DebtReduction[0] == '(':
-                DebtReduction = DebtReduction[1:-1] #We dont know what position it is in so we find out and take only that specific value       
+                DebtReduction = '-' + DebtReduction[1:-1] #We dont know what position it is in so we find out and take only that specific value       
             if DebtReduction[-1] == 'B':
                 DebtReduction = float(DebtReduction[0:-1]) * 1000000000
             elif DebtReduction[-1] == 'M':
@@ -406,7 +464,7 @@ def CashFlow(soup) -> float:
                 DebtReduction = float(DebtReduction[0:-1]) * 1000             
             elif DebtReduction == '-':
                 DebtReduction = 0 
-            TotalDebtReduction += DebtReduction          
+            TotalDebtReduction += DebtReduction         
 
     #We check if the Free Cash Flow exists in the income statement, and then we isolate it and convert the number from millions or billions     
     FreeCashFlow = 0
@@ -415,7 +473,7 @@ def CashFlow(soup) -> float:
         FreeCashFlow = FreeCashFlow[int(FreeCashFlow.index.values)]
         #Since negative values come with parentesis , we check for those and then remove them
         if FreeCashFlow[0] == '(':
-            FreeCashFlow = FreeCashFlow[1:-1] #We dont know what position it is in so we find out and take only that specific value       
+            FreeCashFlow = '-' + FreeCashFlow[1:-1] #We dont know what position it is in so we find out and take only that specific value       
         if FreeCashFlow[-1] == 'B':
             FreeCashFlow = float(FreeCashFlow[0:-1]) * 1000000000
         elif FreeCashFlow[-1] == 'M':
@@ -586,7 +644,7 @@ def main ():
     PE, PEG, PS, PB, MarketCap, DebtEquity, Recom, InsiderTrans, InstitutionTrans, ROA, ROE, AvgVolume, Price, LastChange, PerfWeek, PerfMonth, PerfYear, YearHighPercent, EPSNextY, EPSNext5Y = fundamentalInfoFVZ(soup1)
 
     RevenuePast5, RevenueGrowthPast5, EBITDA, EBIT, DepreciationAmortization, EPSpast5, EPSgrowthPast5, InterestExpense = IncomeStatementMW(soup2)
-    TotalEquity, GrowthLA, TotalLiabilities, TotalCurrentLiabilities, LongTermLiabilities, TotalAssets, TotalCurrentAssets, LongTermAssets = BalanceSheet(soup3)
+    TotalEquity, GrowthLA, GrowthDA, TotalLiabilities, TotalCurrentLiabilities, LongTermLiabilities, TotalAssets, TotalCurrentAssets, LongTermAssets, ShortTermDebt, LongTermDebt = BalanceSheet(soup3)
     FreeCashFlow, TotalDebtReduction, NetOperatingCashFlow = CashFlow(soup4)
 
     estimateRevision1, estimateRevision2 = EPSRevisions(soup5)
