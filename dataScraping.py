@@ -336,13 +336,14 @@ def BalanceSheet(soup) -> float:
             LA = Liabilities.loc[Liabilities[0] == 'Total Liabilities / Total Assets Total Liabilities / Total Assets'][i]
             if LA[int(LA.index.values)] != '-':
                 RatioLA += [float(LA[int(LA.index.values)][0:-1])]
+    
     #Now we calculate the growth of this ratio year over year            
     GrowthLA = 0            
     for i in range(1, len(RatioLA)):
-        GrowthLA += (RatioLA[i] - RatioLA[i-1])
+        GrowthLA += ((RatioLA[i] * 100) / RatioLA[i-1]) - 100
         count += 1
     if count != 0:   
-        GrowthLA = GrowthLA / count
+        GrowthLA = GrowthLA / count   
 
     #First we retrieve the Debt to assets ratio of the past 5 years 
     RatioDA = []
@@ -355,10 +356,12 @@ def BalanceSheet(soup) -> float:
     #Now we calculate the growth of this ratio year over year            
     GrowthDA = 0            
     for i in range(1, len(RatioDA)):
-        GrowthDA += (RatioDA[i] - RatioDA[i-1])
+        GrowthDA += ((RatioDA[i] * 100) / RatioDA[i-1]) - 100
         count += 1
     if count != 0:   
-        GrowthDA = GrowthDA / count       
+        GrowthDA = GrowthDA / count     
+    #######!!!!!!!!!!!Check to see what companies need this!!!!!!!!!!!!!##############
+    print(GrowthDA)          
 
     #We check if the Total Equity exists in the income statement, and then we isolate it and convert the number from millions or billions        
     TotalEquity = 0

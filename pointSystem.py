@@ -51,10 +51,10 @@ def health(DebtEquity:float, LongTermLiabilities:float, NetOperatingCashFlow:flo
 		#Calculate ratio
 		RatioFD = NetOperatingCashFlow / (LongTermDebt + ShortTermDebt)
 		if RatioFD >= 1:
-			pointsEarnedHealth += 2
+			pointsEarnedHealth += 5
 			print(31)
 		elif 0.5 <= RatioFD < 1:
-			pointsEarnedHealth += 2
+			pointsEarnedHealth += 3
 			print(32)
 		elif 0.25 <= RatioFD < 0.5:
 			pointsEarnedHealth += 1
@@ -87,6 +87,8 @@ def health(DebtEquity:float, LongTermLiabilities:float, NetOperatingCashFlow:flo
 	else:
 		print('Not sufficient Data for Total Current Assets and Long Term Liabilities')	
 
+	#In case that previous two measurements dont work we use another one with similar parameters but less importance
+	#2 points if assets cover liabilities and equity	
 	if TotalCurrentAssets == 0 or TotalCurrentLiabilities == 0 or LongTermLiabilities == 0:
 		if TotalAssets != 0 and TotalLiabilities != 0:
 			RatioLA3 = (TotalLiabilities + TotalEquity) / TotalAssets
@@ -97,9 +99,10 @@ def health(DebtEquity:float, LongTermLiabilities:float, NetOperatingCashFlow:flo
 		else:
 			print('Not sufficient Data for Total Assets and Total Liabilities')		
 
+
 	#2 points if liabilities/assets ratio has been reduced in the last few years	
 	if GrowthLA != 0:
-		if GrowthLA > 0:
+		if GrowthLA < 0:
 			pointsEarnedHealth += 2
 			print(61)
 		TotalpointsHealth += 2
@@ -114,6 +117,7 @@ def health(DebtEquity:float, LongTermLiabilities:float, NetOperatingCashFlow:flo
 		if GrowthDA == 0:
 			print('Not sufficient Data for Liabilities/Assets Ratio Growth or Debt/Assets Ratio Growth')
 
+	print(TotalDebtReduction)
 	if TotalDebtReduction != 0:
 		if TotalDebtReduction > 0:
 			pointsEarnedHealth += 3
