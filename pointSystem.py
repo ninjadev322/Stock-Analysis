@@ -19,12 +19,12 @@ def health(DebtEquity:float, LongTermLiabilities:float, NetOperatingCashFlow:flo
 	#We evaluate each parameter and add points if it meets the criteria
 	#2 points if it is below 0.8 and 3 if it is below 0.4
 	DebtEquity = float(DebtEquity)
-	if DebtEquity == 0:
+	if DebtEquity == -1:
 		#to redefinde Debt/Equity Ratio first we must make sure that total equity is not zero so that we dont have an error
-		if TotalEquity != 0:
+		if TotalEquity != -1:
 			DebtEquity = (LongTermDebt + ShortTermDebt) / TotalEquity
 	#We check to see if it is correct, redefined or not
-	if DebtEquity != 0:
+	if DebtEquity != -1:
 		if DebtEquity <= 0.4:
 			pointsEarnedHealth += 5
 			print(11)
@@ -36,7 +36,7 @@ def health(DebtEquity:float, LongTermLiabilities:float, NetOperatingCashFlow:flo
 		print('Not sufficient Data for Debt/Equity Ratio')
 
 	#3 Points if EBIT covers 33% of Interest Expense
-	if EBIT != 0:
+	if EBIT != -1:
 		#Calculate ratio
 		RatioLE = InterestExpense / EBIT
 		if RatioLE <= 0.33:
@@ -47,7 +47,7 @@ def health(DebtEquity:float, LongTermLiabilities:float, NetOperatingCashFlow:flo
 		print('Not sufficient Data for EBIT and Interest Expense')	
 
 	#3 points if free cash flow covers half of total liabilities and 2 points if it covers all if it
-	if NetOperatingCashFlow != 0 and LongTermDebt != 0:
+	if NetOperatingCashFlow != -1 and LongTermDebt != -1:
 		#Calculate ratio
 		RatioFD = NetOperatingCashFlow / (LongTermDebt + ShortTermDebt)
 		if RatioFD >= 1:
@@ -63,7 +63,7 @@ def health(DebtEquity:float, LongTermLiabilities:float, NetOperatingCashFlow:flo
 	else:
 		print('Not sufficient Data for Net Operating Cash Flow and Total Liabilities')		
 
-	if TotalCurrentAssets != 0 and TotalCurrentLiabilities != 0:
+	if TotalCurrentAssets != -1 and TotalCurrentLiabilities != -1:
 		#Calculate Ratio
 		RatioLA = TotalCurrentLiabilities / TotalCurrentAssets	
 		if RatioLA < 1:
@@ -74,7 +74,7 @@ def health(DebtEquity:float, LongTermLiabilities:float, NetOperatingCashFlow:flo
 		print('Not sufficient Data for Total Current Assets and Total Current Liabilities')		
 
 	#3 points if current assets is equal or bigger than long term liabilities and 2 points if it at most 25% smaller
-	if TotalCurrentAssets != 0 and LongTermLiabilities != 0:
+	if TotalCurrentAssets != -1 and LongTermLiabilities != -1:
 		#Calculate Ratio
 		RatioLA2 = LongTermLiabilities / TotalCurrentAssets
 		if RatioLA2 <= 1:
@@ -89,8 +89,8 @@ def health(DebtEquity:float, LongTermLiabilities:float, NetOperatingCashFlow:flo
 
 	#In case that previous two measurements dont work we use another one with similar parameters but less importance
 	#2 points if assets cover liabilities and equity	
-	if TotalCurrentAssets == 0 or TotalCurrentLiabilities == 0 or LongTermLiabilities == 0:
-		if TotalAssets != 0 and TotalLiabilities != 0:
+	if TotalCurrentAssets == -1 or TotalCurrentLiabilities == -1 or LongTermLiabilities == -1:
+		if TotalAssets != -1 and TotalLiabilities != -1:
 			RatioLA3 = (TotalLiabilities + TotalEquity) / TotalAssets
 			if RatioLA3 > 1:
 				print(54)
@@ -101,7 +101,7 @@ def health(DebtEquity:float, LongTermLiabilities:float, NetOperatingCashFlow:flo
 
 
 	#2 points if liabilities/assets ratio has been reduced in the last few years	
-	if GrowthLA != 0:
+	if GrowthLA != -1:
 		if GrowthLA < 0:
 			pointsEarnedHealth += 2
 			print(61)
@@ -109,7 +109,7 @@ def health(DebtEquity:float, LongTermLiabilities:float, NetOperatingCashFlow:flo
 	else:
 		#if the LA ratio isnt available we opt for the DA ratio
 		#2 points if debt/assets ratio has reduced in the last few years
-		if GrowthDA != 0:
+		if GrowthDA != -1:
 			if GrowthDA < 0:
 				pointsEarnedHealth += 2
 				print(62)
@@ -117,7 +117,8 @@ def health(DebtEquity:float, LongTermLiabilities:float, NetOperatingCashFlow:flo
 		if GrowthDA == 0:
 			print('Not sufficient Data for Liabilities/Assets Ratio Growth or Debt/Assets Ratio Growth')
 
-	if TotalDebtReduction != 0:
+	#3 points if there has been debt reduction over the past 5 yearss
+	if TotalDebtReduction != -1:
 		if TotalDebtReduction < 0:
 			pointsEarnedHealth += 3
 			print(7)
@@ -130,7 +131,88 @@ def health(DebtEquity:float, LongTermLiabilities:float, NetOperatingCashFlow:flo
 
 	return pointsEarnedHealth, TotalpointsHealth	
 
-#def future(EPSNextY:float, EPSNext5Y:float, estimateRevision1:float, estimateRevision2:float, AverageTarget:float, LowTarget:float, Buy:List[int], Overweight:List[int], Hold:List[int], Underweight:List[int], Sell:List[int], pointsEarnedFuture = 0, TotalpointsFuture = 0) -> float:
+def future(EPSNextY:float, EPSNext5Y:float, estimateRevision1:float, estimateRevision2:float, AverageTarget:float, LowTarget:float, Buy:List[int], Overweight:List[int], Hold:List[int], Underweight:List[int], Sell:List[int], RevenueGrowthNextY:float, Price:float, pointsEarnedFuture = 0, TotalpointsFuture = 0) -> float:
+	#We measure differrent values and see if it meets the established parameters, adding points in affirmative cases
+	#2 points if earnings growth is over 10 percent and another 3 if it is over 20 percent
+	EPSNextY = float(EPSNextY)
+	if EPSNextY != -1:
+		if EPSNextY > 10:
+			print(11)
+			pointsEarnedFuture += 2
+		if EPSNextY > 20:
+			print(12)
+			TotalpointsFuture += 3
+		TotalpointsFuture += 5
+	else:
+		print('Not sufficient Data for EPS Next Year')
+
+	#2 points if earnings growth is over 10 percent and another 3 if it is over 20 percent
+	EPSNext5Y = float(EPSNext5Y)
+	if EPSNext5Y != -1:
+		if EPSNext5Y > 10:
+			print(21)
+			pointsEarnedFuture += 2
+		if EPSNext5Y > 20:
+			print(22)
+			TotalpointsFuture += 3
+		TotalpointsFuture += 5
+	else:
+		print('Not sufficient Data for EPS Next 5 Years')
+
+	#2 points if only one of them is positive and three if both are 
+	if estimateRevision1 > 0 or estimateRevision2 > 0:
+		if estimateRevision1 <= 0:
+			pointsEarnedFuture += 2
+			print(31)
+		elif estimateRevision2 <= 0:
+			pointsEarnedFuture += 2
+			print(31)
+		else:
+			print(32)
+			pointsEarnedFuture += 3
+	TotalpointsFuture += 3
+
+	#2 points if price is lower than average target by analysts and 3 points if it is lower than low target by analysts
+	Price = float(Price)
+	if Price != -1:
+		if AverageTarget != -1:
+			if Price < AverageTarget:
+				pointsEarnedFuture += 2
+				print(41)
+			TotalpointsFuture += 2
+		else:
+			print('Not sufficient Data for Average Target')	
+		if LowTarget != -1:	
+			if Price < LowTarget:
+				pointsEarnedFuture += 3
+				print(42)
+			TotalpointsFuture += 3
+		else:
+			print('Not sufficient Data for Low Target')		
+	else:
+		print('Not sufficient Data for Price')
+
+	#
+	if RevenueGrowthNextY != -1:
+		if RevenueGrowthNextY > 10:
+			print(51)
+			pointsEarnedFuture += 2
+		if RevenueGrowthNextY > 15:
+			print(52)
+			TotalpointsFuture += 3
+		TotalpointsFuture += 5
+
+
+			
+
+	print(pointsEarnedFuture)
+	print(TotalpointsFuture)
+
+	return pointsEarnedFuture, TotalpointsFuture				
+
+			
+
+
 
 
 
@@ -184,7 +266,7 @@ def  main ():
 	
 	#####################################################################################################################################################
 
-	url6 = 'https://www.marketwatch.com/investing/stock/' + Ticker + '/analystestimates?mod=mw_quote_tab'
+	url6 = 'https://finance.yahoo.com/quote/' + Ticker + '/analysis?p=' + Ticker
 	req6 = Request(url6, headers = {'User-Agent': 'Mozilla/5'}) #The website restricts urllib request so we must use request switching the user agent to mozilla 
 	webpage_coded6 = urlopen(req6, timeout = 4).read() #We open the page and read all the raw info
     #webpage_decoded = webpage_coded.decode('utf-8') #Since it is coded in utf-8 we decode it to be able to process it
@@ -202,7 +284,7 @@ def  main ():
 	HighTarget, LowTarget, AverageTarget, NumberOfRatings = PriceTargets(soup5)
 
 	EPSestimates = EPSEstimates(soup5)
-	RevenueEstimates = RevenueEstimates(soup6)
+	RevenueGrowthNextY = RevenuesEstimates(soup6)
 
 	columnNames, xValues, Buy, Overweight, Hold, Underweight, Sell = Recomendations(soup5)
 
@@ -214,7 +296,7 @@ def  main ():
 	print()
 	print()
 	print()
-	future(EPSNextY, EPSNext5Y, estimateRevision1, estimateRevision2, AverageTarget, LowTarget, Buy, Overweight, Hold, Underweight, Sell)
+	future(EPSNextY, EPSNext5Y, estimateRevision1, estimateRevision2, AverageTarget, LowTarget, Buy, Overweight, Hold, Underweight, Sell, RevenueGrowthNextY, Price)
 
 
 

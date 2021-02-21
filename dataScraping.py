@@ -144,7 +144,8 @@ def IncomeStatementMW(soup) -> float:
     #We take the growth year to year and average it. We must take off the percentage symbol from each one to be able to do the calculations
     RevenueGrowthPast5 = 0
     for i in range(2, len(IncomeStatement.columns) - 1):
-        RevenueGrowthPast5 += float(IncomeStatement[i][1][0:-1])
+        if IncomeStatement[i][1] != '-':
+            RevenueGrowthPast5 += float(IncomeStatement[i][1][0:-1])
     RevenueGrowthPast5 = RevenueGrowthPast5 / (len(IncomeStatement.columns) - 3)   
     
     #We check if the EBITDA exists in the income statement, and then we isolate it and convert the number from millions
@@ -161,8 +162,9 @@ def IncomeStatementMW(soup) -> float:
         elif EBITDA[-1] == 'K':
                 EBITDA = float(EBITDA[0:-1]) * 1000    
         elif EBITDA == '-':
-            EBITDA = 0    
-
+            EBITDA = -1    
+    else:
+        EBITDA = -1
 
     #We check if the Depreciation and Amortization exists in the income statement, and then we isolate it and convert the number from millions
     DepreciationAmortization = 0
@@ -176,7 +178,9 @@ def IncomeStatementMW(soup) -> float:
         elif DepreciationAmortization[-1] == 'K':
                 DepreciationAmortization = float(DepreciationAmortization[0:-1]) * 1000    
         elif DepreciationAmortization == '-':
-            DepreciationAmortization = 0     
+            DepreciationAmortization = -1 
+    else:
+        DepreciationAmortization = -1           
        
     #We check if the EPS of the past 5 years exists in the income statement, and then we isolate it and convert the number from millions
     EPSpast5 = []
@@ -207,7 +211,7 @@ def IncomeStatementMW(soup) -> float:
 
     #Since the statement doesnt give us EBIT, we calculate it by using other metrics, first making sure we have these    
     EBIT = 0    
-    if EBITDA != 0:
+    if EBITDA != -1:
         EBIT = EBITDA - DepreciationAmortization
     #sometimes EBITDA doesnt exist(Insurance companies) and EBIT is equal to Operating income before interest expense and taxes
     else:  
@@ -221,7 +225,9 @@ def IncomeStatementMW(soup) -> float:
             elif EBIT[-1] == 'K':
                     EBIT = float(EBIT[0:-1]) * 1000    
             elif EBIT == '-':
-                EBIT = 0 
+                EBIT = -1
+        else:
+            EBIT = -1        
             
     #We check if the InterestExpense exists in the income statement, and then we isolate it and convert the number from millions
     InterestExpense = 0
@@ -235,7 +241,7 @@ def IncomeStatementMW(soup) -> float:
         elif InterestExpense[-1] == 'K':
                 InterestExpense = float(InterestExpense[0:-1]) * 1000    
         elif InterestExpense == '-':
-            InterestExpense = 0   
+            InterestExpense = -1   
     #We make sure that interest expense is not named in another name(happens with insurance companies)
     else:
         if len(IncomeStatement.loc[IncomeStatement[0] == 'Interest Expense (excl. Interest Capitalized) Interest Expense (excl. Interest Capitalized)']) == 1:              
@@ -248,7 +254,9 @@ def IncomeStatementMW(soup) -> float:
             elif InterestExpense[-1] == 'K':
                     InterestExpense = float(InterestExpense[0:-1]) * 1000    
             elif InterestExpense == '-':
-                InterestExpense = 0
+                InterestExpense = -1
+        else:
+            InterestExpense = -1
 
     return RevenuePast5, RevenueGrowthPast5, EBITDA, EBIT, DepreciationAmortization, EPSpast5, EPSgrowthPast5, InterestExpense
 
@@ -276,7 +284,9 @@ def BalanceSheet(soup) -> float:
         elif TotalAssets[-1] == 'K':
                 TotalAssets = float(TotalAssets[0:-1]) * 1000       
         elif TotalAssets == '-':
-            TotalAssets = 0    
+            TotalAssets = -1  
+    else:
+        TotalAssets = -1         
 
     #We check if the Total Current Assets exists in the income statement, and then we isolate it and convert the number from millions or billions
     TotalCurrentAssets = 0
@@ -290,8 +300,10 @@ def BalanceSheet(soup) -> float:
         elif TotalCurrentAssets[-1] == 'K':
                 TotalCurrentAssets = float(TotalCurrentAssets[0:-1]) * 1000    
         elif TotalCurrentAssets == '-':
-            TotalCurrentAssets = 0                       
-
+            TotalCurrentAssets = -1                       
+    else:
+        TotalCurrentAssets = -1
+                
     ###################################################################################################################################
 
     Liabilities = BalanceSheet[1]
@@ -309,8 +321,10 @@ def BalanceSheet(soup) -> float:
         elif TotalCurrentLiabilities[-1] == 'K':
                 TotalCurrentLiabilities = float(TotalCurrentLiabilities[0:-1]) * 1000    
         elif TotalCurrentLiabilities == '-':
-            TotalCurrentLiabilities = 0    
-
+            TotalCurrentLiabilities = -1       
+    else:
+        TotalCurrentLiabilities = -1
+                
     #We check if the Total Liabilities exists in the income statement, and then we isolate it and convert the number from millions or billions        
     TotalLiabilities = 0
     if len(Liabilities.loc[Liabilities[0] == 'Total Liabilities Total Liabilities']) == 1:
@@ -326,7 +340,9 @@ def BalanceSheet(soup) -> float:
         elif TotalLiabilities[-1] == 'K':
                 TotalLiabilities = float(TotalLiabilities[0:-1]) * 1000    
         elif TotalLiabilities == '-':
-            TotalLiabilities = 0    
+            TotalLiabilities = -1
+    else:
+        TotalLiabilities = -1        
    
     #First we retrieve the liabilities to assets ratio of the past 5 years 
     RatioLA = []
@@ -338,12 +354,15 @@ def BalanceSheet(soup) -> float:
                 RatioLA += [float(LA[int(LA.index.values)][0:-1])]
     
     #Now we calculate the growth of this ratio year over year            
-    GrowthLA = 0            
-    for i in range(1, len(RatioLA)):
-        GrowthLA += ((RatioLA[i] * 100) / RatioLA[i-1]) - 100
-        count += 1
-    if count != 0:   
-        GrowthLA = GrowthLA / count   
+    GrowthLA = 0  
+    if len(RatioLA) != 0:         
+        for i in range(1, len(RatioLA)):
+            GrowthLA += ((RatioLA[i] * 100) / RatioLA[i-1]) - 100
+            count += 1
+        if count != 0:   
+            GrowthLA = GrowthLA / count
+    else:
+        GrowthLA = -1           
 
     #First we retrieve the Debt to assets ratio of the past 5 years 
     RatioDA = []
@@ -354,14 +373,15 @@ def BalanceSheet(soup) -> float:
             if DA[int(DA.index.values)] != '-':
                 RatioDA += [float(DA[int(DA.index.values)][0:-1])]
     #Now we calculate the growth of this ratio year over year            
-    GrowthDA = 0            
-    for i in range(1, len(RatioDA)):
-        GrowthDA += ((RatioDA[i] * 100) / RatioDA[i-1]) - 100
-        count += 1
-    if count != 0:   
-        GrowthDA = GrowthDA / count     
-    #######!!!!!!!!!!!Check to see what companies need this!!!!!!!!!!!!!##############
-    print(GrowthDA)          
+    GrowthDA = 0 
+    if len(RatioDA) != 0:           
+        for i in range(1, len(RatioDA)):
+            GrowthDA += ((RatioDA[i] * 100) / RatioDA[i-1]) - 100
+            count += 1
+        if count != 0:   
+            GrowthDA = GrowthDA / count
+    else:
+        GrowthDA = -1                
 
     #We check if the Total Equity exists in the income statement, and then we isolate it and convert the number from millions or billions        
     TotalEquity = 0
@@ -375,7 +395,9 @@ def BalanceSheet(soup) -> float:
         elif TotalEquity[-1] == 'K':
                 TotalEquity = float(TotalEquity[0:-1]) * 1000    
         elif TotalEquity == '-':
-            TotalEquity = 0
+            TotalEquity = -1
+    else:
+        TotalEquity = -1
 
     #We check if Short Term Debt exists in the income statement, and then we isolate it and convert the number from millions or billions        
     ShortTermDebt = 0
@@ -389,7 +411,9 @@ def BalanceSheet(soup) -> float:
         elif ShortTermDebt[-1] == 'K':
                 ShortTermDebt = float(ShortTermDebt[0:-1]) * 1000    
         elif ShortTermDebt == '-':
-            ShortTermDebt = 0
+            ShortTermDebt = -1
+    else:
+        ShortTermDebt = -1        
 
     #We check if the Long Term Debt exists in the income statement, and then we isolate it and convert the number from millions or billions        
     LongTermDebt = 0
@@ -403,7 +427,9 @@ def BalanceSheet(soup) -> float:
         elif LongTermDebt[-1] == 'K':
                 LongTermDebt = float(LongTermDebt[0:-1]) * 1000    
         elif LongTermDebt == '-':
-            LongTermDebt = 0                     
+            LongTermDebt = -1     
+    else:
+        LongTermDebt = -1                  
 
     #We calculate the long term assets and liabilities with the difference of other two metrics but first we must make sure that these exist        
     LongTermAssets = 0
@@ -440,7 +466,9 @@ def CashFlow(soup) -> float:
         elif NetOperatingCashFlow[-1] == 'K':
                 NetOperatingCashFlow = float(NetOperatingCashFlow[0:-1]) * 1000           
         elif NetOperatingCashFlow == '-':
-            NetOperatingCashFlow = 0                    
+            NetOperatingCashFlow = -1                    
+    else:
+        NetOperatingCashFlow = -1        
 
     InvestingActivities = CashFlow[1]
     InvestingActivities.columns = pd.RangeIndex(0, len(InvestingActivities.columns)) #Indexing the columns as numbers so that the differences in the name of columns wont matter
@@ -466,8 +494,10 @@ def CashFlow(soup) -> float:
             elif DebtReduction[-1] == 'K':
                 DebtReduction = float(DebtReduction[0:-1]) * 1000             
             elif DebtReduction == '-':
-                DebtReduction = 0 
+                DebtReduction = 0
             TotalDebtReduction += DebtReduction         
+    else:
+        TotalDebtReduction = -1
 
     #We check if the Free Cash Flow exists in the income statement, and then we isolate it and convert the number from millions or billions     
     FreeCashFlow = 0
@@ -484,7 +514,9 @@ def CashFlow(soup) -> float:
         elif FreeCashFlow[-1] == 'K':
                 FreeCashFlow = float(FreeCashFlow[0:-1]) * 1000             
         elif FreeCashFlow == '-':
-            FreeCashFlow = 0
+            FreeCashFlow = -1
+    else:
+        FreeCashFlow = -1        
 
     return FreeCashFlow, TotalDebtReduction, NetOperatingCashFlow                 
 
@@ -549,13 +581,13 @@ def PriceTargets(soup) -> float:
     AverageTarget = -1
 
     #Must make sure that they are not NaN
-    if priceTargets[1][0] == str:
+    if type(priceTargets[1][0]) == str:
         #We must check if it contains a , so that we can remove it
         HighTarget = float(priceTargets[1][0][1:].replace(',', ''))     
-    if priceTargets[1][2] == str:
+    if type(priceTargets[1][2]) == str:
         #We must check if it contains a , so that we can remove it
         LowTarget = float(priceTargets[1][2][1:].replace(',', ''))  
-    if priceTargets[1][3] == str:    
+    if type(priceTargets[1][3]) == str:    
         #We must check if it contains a , so that we can remove it
         AverageTarget = float(priceTargets[1][3][1:].replace(',', ''))                
 
@@ -573,13 +605,14 @@ def EPSEstimates(soup) -> None:
 
     return EPSestimates
 
-def RevenuesEstimates(soup) -> None:
+def RevenuesEstimates(soup) -> float:
     #We inspect the webpage to finde the html tags of the objects that we want
     #Transform the html to a pandas dataframe
     RevenueEstimates = pd.read_html(str(soup), attrs={'class' : 'W(100%) M(0) BdB Bdc($seperatorColor) Mb(25px)'})[1]
-    print(RevenueEstimates)
+    RevenueEstimates.columns = pd.RangeIndex(0, len(RevenueEstimates.columns))
+    RevenueGrowthNextY = float(RevenueEstimates[4][5][0:-1])
 
-    return RevenueEstimates
+    return RevenueGrowthNextY 
 
 def Recomendations(soup) -> int:
     #We inspect the webpage to finde the html tags of the objects that we want
@@ -684,7 +717,7 @@ def main ():
     HighTarget, LowTarget, AverageTarget, NumberOfRatings = PriceTargets(soup5)
 
     EPSestimates = EPSEstimates(soup5)
-    RevenueEstimates = RevenuesEstimates(soup6)
+    RevenueGrowthNextY = RevenuesEstimates(soup6)
 
     columnNames, xValues, Buy, Overweight, Hold, Underweight, Sell = Recomendations(soup5)
 
