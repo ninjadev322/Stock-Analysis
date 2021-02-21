@@ -24,51 +24,51 @@ def fundamentalInfoFVZ(soup) -> float:
     fundamentals = pd.read_html(str(soup), attrs={'class': 'snapshot-table2'}) #Can only do this if class type is a table 
     PE = fundamentals[0][3][0] # Price to earnings ratio
     if PE == '-':
-        PE = 0
+        PE = -1
     PEG = fundamentals[0][3][2] # Price to earnings growth ratio
     if PEG == '-':
-        PEG = 0
+        PEG = -1
     PS = fundamentals[0][3][3] # Price to sales ratio
     if PS == '-':
-        PS = 0
+        PS = -1
     PB = fundamentals[0][3][4] # Price to book value ratio
     if PB == '-':
-        PB = 0
+        PB = -1
     DebtEquity = fundamentals[0][3][9] # Debt to equity ratio
     if DebtEquity == '-':
-        DebtEquity = 0
+        DebtEquity = -1
     Recom = fundamentals[0][1][11] # Analysts recomendations
     if Recom == '-':
-        Recom = 0
+        Recom = -1
     MarketCap = fundamentals[0][1][1] #Number of shares times the the current price of each share
     if MarketCap == '-':
-        MarketCap = 0
+        MarketCap = -1
     else:    
         MarketCap = float(MarketCap[0:-1]) #When scraped comes with a B or M at the end we tranform it into number 
         MarketCap = MarketCap * 1000000000 #The value is given to use in billions so we transform it
     InsiderTrans = fundamentals[0][7][1] #The percentage of recent movements by insiders in the company
     if InsiderTrans == '-':
-        InsiderTrans = 0
+        InsiderTrans = -1
     else:    
         InsiderTrans = InsiderTrans[0:-1]    
     InstitutionTrans = fundamentals[0][7][3] #The percentage of recent mvoements made my hedgefunds and institutions
     if InstitutionTrans == '-':
-        InstitutionTrans = 0
+        InstitutionTrans = -1
     else:    
         InstitutionTrans = InstitutionTrans[0:-1]
     ROA = fundamentals[0][7][4] #Return on assets
     if ROA == '-':
-        ROA = 0
+        ROA = -1
     else:    
         ROA = ROA[0:-1]   
     ROE = fundamentals[0][7][5] #Return on equity
     if ROE == '-':
-        ROE = 0
+        ROE = -1
     else:    
         ROE = ROE[0:-1]       
     AvgVolume = fundamentals[0][9][10] #The amount of shares bought and sold in a single trading period
     if AvgVolume == '-':
-        AvgVolume = 0
+        AvgVolume = -1
     else:
         if AvgVolume[-1] == 'B':
             AvgVolume = float(AvgVolume[0:-1]) * 1000000000
@@ -78,40 +78,40 @@ def fundamentalInfoFVZ(soup) -> float:
                 AvgVolume = float(AvgVolume[0:-1]) * 1000
     Price = fundamentals[0][11][10] #price per share
     if Price == '-':
-        Price = 0  
+        Price = -1
     LastChange = fundamentals[0][11][11] #The price percentage change in the last trading day
     if LastChange == '-':
-        LastChange = 0
+        LastChange = -1
     else:
         LastChange = LastChange[0:-1]    
     PerfWeek = fundamentals[0][11][0] #The price percentage change in the last week
     if PerfWeek == '-':
-        PerfWeek = 0
+        PerfWeek = -1
     else:
         PerfWeek = PerfWeek[0:-1]    
     PerfMonth = fundamentals[0][11][1] #The price percentage change in the last month
     if PerfMonth == '-':
-        PerfMonth = 0
+        PerfMonth = -1
     else:
         PerfMonth = PerfMonth[0:-1]    
     PerfYear = fundamentals[0][11][4] #The price percentage change in the last year
     if PerfYear == '-':
-        PerfYear = 0
+        PerfYear = -1
     else:
         PerfYear = PerfYear[0:-1]    
     YearHighPercent = fundamentals[0][9][6] #The percent difference from its 52 week high
     if YearHighPercent == '-':
-        YearHighPercent = 0
+        YearHighPercent = -1
     else:
         YearHighPercent = YearHighPercent[0:-1]   
     EPSNextY = fundamentals[0][5][4] #Earnings per share growth for next year 
     if EPSNextY == '-':
-        EPSNextY = 0
+        EPSNextY = -1
     else:    
         EPSNextY = EPSNextY[0:-1]  
     EPSNext5Y = fundamentals[0][5][5] #Earnings per share growth for next 5 years 
     if EPSNext5Y == '-':
-        EPSNext5Y = 0
+        EPSNext5Y = -1
     else:    
         EPSNext5Y = EPSNext5Y[0:-1]                 
 
@@ -533,6 +533,7 @@ def EPSRevisions(soup) -> float:
                 estimateRevision2 += (float(secondYear[1][i - 1][1:] ) * 100) / float(secondYear[1][i][1:]) - 100   
         except:
             None
+
     return estimateRevision1, estimateRevision2
 
 def PriceTargets(soup) -> float:
@@ -542,23 +543,43 @@ def PriceTargets(soup) -> float:
     estimates = pd.read_html(str(soup), attrs={'class' : 'table value-pairs no-heading font--lato'})
 
     priceTargets = estimates[1]
-    #We must check if it contains a , so that we can remove it
-    HighTarget = float(priceTargets[1][0][1:].replace(',', ''))     
-    LowTarget = float(priceTargets[1][2][1:].replace(',', ''))  
-    AverageTarget = float(priceTargets[1][3][1:].replace(',', ''))                
+    #We initialize the variables
+    HighTarget = -1
+    LowTarget = -1
+    AverageTarget = -1
+
+    #Must make sure that they are not NaN
+    if priceTargets[1][0] == str:
+        #We must check if it contains a , so that we can remove it
+        HighTarget = float(priceTargets[1][0][1:].replace(',', ''))     
+    if priceTargets[1][2] == str:
+        #We must check if it contains a , so that we can remove it
+        LowTarget = float(priceTargets[1][2][1:].replace(',', ''))  
+    if priceTargets[1][3] == str:    
+        #We must check if it contains a , so that we can remove it
+        AverageTarget = float(priceTargets[1][3][1:].replace(',', ''))                
 
     Summary = estimates[0]
     NumberOfRatings = int(Summary[1][2])
 
     return HighTarget, LowTarget, AverageTarget, NumberOfRatings
 
-def EPSEstimates(soup):
+def EPSEstimates(soup) -> None:
     #We inspect the webpage to finde the html tags of the objects that we want
     #Transform the html to a pandas dataframe
     EPSestimates = pd.read_html(str(soup), attrs={'class' : 'table table--primary'})[0]
     #We save the chart to be able to graph the estimates later 
+    print(EPSestimates)
 
     return EPSestimates
+
+def RevenuesEstimates(soup) -> None:
+    #We inspect the webpage to finde the html tags of the objects that we want
+    #Transform the html to a pandas dataframe
+    RevenueEstimates = pd.read_html(str(soup), attrs={'class' : 'W(100%) M(0) BdB Bdc($seperatorColor) Mb(25px)'})[1]
+    print(RevenueEstimates)
+
+    return RevenueEstimates
 
 def Recomendations(soup) -> int:
     #We inspect the webpage to finde the html tags of the objects that we want
@@ -643,6 +664,15 @@ def main ():
 
     soup5 = BeautifulSoup(webpage_coded5, 'html.parser') #Parsing(breaking the code down into relevant info) the html code
 
+    #####################################################################################################################################################
+
+    url6 = 'https://finance.yahoo.com/quote/' + Ticker + '/analysis?p=' + Ticker
+    req6 = Request(url6, headers = {'User-Agent': 'Mozilla/5'}) #The website restricts urllib request so we must use request switching the user agent to mozilla 
+    webpage_coded6 = urlopen(req6, timeout = 4).read() #We open the page and read all the raw info
+    #webpage_decoded = webpage_coded.decode('utf-8') #Since it is coded in utf-8 we decode it to be able to process it
+
+    soup6 = BeautifulSoup(webpage_coded6, 'html.parser') #Parsing(breaking the code down into relevant info) the html code
+
 
     PE, PEG, PS, PB, MarketCap, DebtEquity, Recom, InsiderTrans, InstitutionTrans, ROA, ROE, AvgVolume, Price, LastChange, PerfWeek, PerfMonth, PerfYear, YearHighPercent, EPSNextY, EPSNext5Y = fundamentalInfoFVZ(soup1)
 
@@ -654,6 +684,7 @@ def main ():
     HighTarget, LowTarget, AverageTarget, NumberOfRatings = PriceTargets(soup5)
 
     EPSestimates = EPSEstimates(soup5)
+    RevenueEstimates = RevenuesEstimates(soup6)
 
     columnNames, xValues, Buy, Overweight, Hold, Underweight, Sell = Recomendations(soup5)
 

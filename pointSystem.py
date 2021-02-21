@@ -117,9 +117,8 @@ def health(DebtEquity:float, LongTermLiabilities:float, NetOperatingCashFlow:flo
 		if GrowthDA == 0:
 			print('Not sufficient Data for Liabilities/Assets Ratio Growth or Debt/Assets Ratio Growth')
 
-	print(TotalDebtReduction)
 	if TotalDebtReduction != 0:
-		if TotalDebtReduction > 0:
+		if TotalDebtReduction < 0:
 			pointsEarnedHealth += 3
 			print(7)
 		TotalpointsHealth += 3
@@ -130,6 +129,11 @@ def health(DebtEquity:float, LongTermLiabilities:float, NetOperatingCashFlow:flo
 	print(TotalpointsHealth)
 
 	return pointsEarnedHealth, TotalpointsHealth	
+
+#def future(EPSNextY:float, EPSNext5Y:float, estimateRevision1:float, estimateRevision2:float, AverageTarget:float, LowTarget:float, Buy:List[int], Overweight:List[int], Hold:List[int], Underweight:List[int], Sell:List[int], pointsEarnedFuture = 0, TotalpointsFuture = 0) -> float:
+
+
+
 
 
 def  main ():
@@ -177,6 +181,15 @@ def  main ():
     #webpage_decoded = webpage_coded.decode('utf-8') #Since it is coded in utf-8 we decode it to be able to process it
 
 	soup5 = BeautifulSoup(webpage_coded5, 'html.parser') #Parsing(breaking the code down into relevant info) the html code
+	
+	#####################################################################################################################################################
+
+	url6 = 'https://www.marketwatch.com/investing/stock/' + Ticker + '/analystestimates?mod=mw_quote_tab'
+	req6 = Request(url6, headers = {'User-Agent': 'Mozilla/5'}) #The website restricts urllib request so we must use request switching the user agent to mozilla 
+	webpage_coded6 = urlopen(req6, timeout = 4).read() #We open the page and read all the raw info
+    #webpage_decoded = webpage_coded.decode('utf-8') #Since it is coded in utf-8 we decode it to be able to process it
+
+	soup6 = BeautifulSoup(webpage_coded6, 'html.parser') #Parsing(breaking the code down into relevant info) the html code
 
 
 	PE, PEG, PS, PB, MarketCap, DebtEquity, Recom, InsiderTrans, InstitutionTrans, ROA, ROE, AvgVolume, Price, LastChange, PerfWeek, PerfMonth, PerfYear, YearHighPercent, EPSNextY, EPSNext5Y = fundamentalInfoFVZ(soup1)
@@ -189,6 +202,7 @@ def  main ():
 	HighTarget, LowTarget, AverageTarget, NumberOfRatings = PriceTargets(soup5)
 
 	EPSestimates = EPSEstimates(soup5)
+	RevenueEstimates = RevenueEstimates(soup6)
 
 	columnNames, xValues, Buy, Overweight, Hold, Underweight, Sell = Recomendations(soup5)
 
@@ -197,7 +211,10 @@ def  main ():
     ############################################################################################################################################
 
 	pointsEarnedHealth, TotalpointsHealth = health(DebtEquity, LongTermLiabilities, NetOperatingCashFlow, EBIT, InterestExpense, TotalCurrentAssets, TotalCurrentLiabilities, TotalLiabilities, GrowthLA, TotalEquity, ShortTermDebt, LongTermDebt, TotalDebtReduction, GrowthDA, TotalAssets)
-
+	print()
+	print()
+	print()
+	future(EPSNextY, EPSNext5Y, estimateRevision1, estimateRevision2, AverageTarget, LowTarget, Buy, Overweight, Hold, Underweight, Sell)
 
 
 
