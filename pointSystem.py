@@ -15,6 +15,12 @@ import numpy as np
 from typing import List
 from dataScraping import *
 
+def sumList(list1:List[int], totalList = 0) -> int:
+	#we need to add all the elements of the list for a total sum
+	for element in list1:
+		totalList += element
+	return totalList	
+
 def health(DebtEquity:float, LongTermLiabilities:float, NetOperatingCashFlow:float, EBIT:float, InterestExpense:float, TotalCurrentAssets:float, TotalCurrentLiabilities:float, TotalLiabilities:float, GrowthLA:float, TotalEquity:float, ShortTermDebt:float, LongTermDebt:float, TotalDebtReduction:float, GrowthDA:float, TotalAssets:float, TotalpointsHealth = 0, pointsEarnedHealth = 0) -> int:
 	#We evaluate each parameter and add points if it meets the criteria
 	#2 points if it is below 0.8 and 3 if it is below 0.4
@@ -70,8 +76,6 @@ def health(DebtEquity:float, LongTermLiabilities:float, NetOperatingCashFlow:flo
 			pointsEarnedHealth += 3
 			print(4)
 		TotalpointsHealth += 3
-	else:
-		print('Not sufficient Data for Total Current Assets and Total Current Liabilities')		
 
 	#3 points if current assets is equal or bigger than long term liabilities and 2 points if it at most 25% smaller
 	if TotalCurrentAssets != -1 and LongTermLiabilities != -1:
@@ -83,9 +87,7 @@ def health(DebtEquity:float, LongTermLiabilities:float, NetOperatingCashFlow:flo
 		elif 1 < RatioLA2 <= 1.25:
 			pointsEarnedHealth += 2
 			print(52)
-		TotalpointsHealth += 5	
-	else:
-		print('Not sufficient Data for Total Current Assets and Long Term Liabilities')	
+		TotalpointsHealth += 5		
 
 	#In case that previous two measurements dont work we use another one with similar parameters but less importance
 	#2 points if assets cover liabilities and equity	
@@ -97,7 +99,7 @@ def health(DebtEquity:float, LongTermLiabilities:float, NetOperatingCashFlow:flo
 				pointsEarnedHealth += 2
 			TotalpointsHealth += 2
 		else:
-			print('Not sufficient Data for Total Assets and Total Liabilities')		
+			print('Not sufficient Data for Assets and Liabilities')		
 
 
 	#2 points if liabilities/assets ratio has been reduced in the last few years	
@@ -141,7 +143,7 @@ def future(EPSNextY:float, EPSNext5Y:float, estimateRevision1:float, estimateRev
 			pointsEarnedFuture += 2
 		if EPSNextY > 20:
 			print(12)
-			TotalpointsFuture += 3
+			pointsEarnedFuture += 3
 		TotalpointsFuture += 5
 	else:
 		print('Not sufficient Data for EPS Next Year')
@@ -154,17 +156,14 @@ def future(EPSNextY:float, EPSNext5Y:float, estimateRevision1:float, estimateRev
 			pointsEarnedFuture += 2
 		if EPSNext5Y > 20:
 			print(22)
-			TotalpointsFuture += 3
+			pointsEarnedFuture += 3
 		TotalpointsFuture += 5
 	else:
 		print('Not sufficient Data for EPS Next 5 Years')
 
 	#2 points if only one of them is positive and three if both are 
 	if estimateRevision1 > 0 or estimateRevision2 > 0:
-		if estimateRevision1 <= 0:
-			pointsEarnedFuture += 2
-			print(31)
-		elif estimateRevision2 <= 0:
+		if estimateRevision1 <= 0 or estimateRevision2 <= 0:
 			pointsEarnedFuture += 2
 			print(31)
 		else:
@@ -177,45 +176,57 @@ def future(EPSNextY:float, EPSNext5Y:float, estimateRevision1:float, estimateRev
 	if Price != -1:
 		if AverageTarget != -1:
 			if Price < AverageTarget:
-				pointsEarnedFuture += 2
+				pointsEarnedFuture += 3
 				print(41)
-			TotalpointsFuture += 2
+			TotalpointsFuture += 3
 		else:
 			print('Not sufficient Data for Average Target')	
 		if LowTarget != -1:	
-			if Price < LowTarget:
-				pointsEarnedFuture += 3
+			if Price <= LowTarget:
+				pointsEarnedFuture += 2
 				print(42)
-			TotalpointsFuture += 3
+			TotalpointsFuture += 2
 		else:
 			print('Not sufficient Data for Low Target')		
 	else:
 		print('Not sufficient Data for Price')
 
-	#
+	#2 points if it is over 10 percent and another three if it is over 15 percent
 	if RevenueGrowthNextY != -1:
-		if RevenueGrowthNextY > 10:
+		if RevenueGrowthNextY > 5:
 			print(51)
 			pointsEarnedFuture += 2
-		if RevenueGrowthNextY > 15:
+		if RevenueGrowthNextY > 10:
 			print(52)
-			TotalpointsFuture += 3
+			pointsEarnedFuture += 2	
+		if RevenueGrowthNextY > 15:
+			print(53)
+			pointsEarnedFuture += 1
 		TotalpointsFuture += 5
 
-
-			
+	#we need to know how many votes of each recommendation there is
+	numBuy = sumList(Buy)
+	numOverweight = sumList(Overweight)
+	numHold = sumList(Hold)
+	numUnderweight = sumList(Underweight)
+	numSell = sumList(Sell)
+	#
+	if numBuy + numOverweight >= numHold + numSell + numUnderweight:
+		pointsEarnedFuture += 2
+		print(61)
+	if numBuy + numOverweight > 1.5 * (numHold + numSell + numUnderweight):
+		pointsEarnedFuture += 3	
+		print(62)
+	TotalpointsFuture += 5	
 
 	print(pointsEarnedFuture)
 	print(TotalpointsFuture)
 
-	return pointsEarnedFuture, TotalpointsFuture				
+	return pointsEarnedFuture, TotalpointsFuture	
 
-			
-
-
-
-
-
+def past(ROA:float, ROE:float, RevenuePast5:float, RevenueGrowthPast5:float, EPSpast5:float, EPSgrowthPast5:float, pointsEarnedPast = 0, TotalpointsFuture = 0)	-> float:
+	#We measure differrent values and see if it meets the established parameters, adding points in affirmative cases
+	None
 
 
 def  main ():
@@ -296,8 +307,10 @@ def  main ():
 	print()
 	print()
 	print()
-	future(EPSNextY, EPSNext5Y, estimateRevision1, estimateRevision2, AverageTarget, LowTarget, Buy, Overweight, Hold, Underweight, Sell, RevenueGrowthNextY, Price)
-
-
+	pointsEarnedFuture, TotalpointsFuture = future(EPSNextY, EPSNext5Y, estimateRevision1, estimateRevision2, AverageTarget, LowTarget, Buy, Overweight, Hold, Underweight, Sell, RevenueGrowthNextY, Price)
+	print()
+	print()
+	print()
+	pointsEarnedPast, TotalpointsPast = past(ROA, ROE, RevenuePast5, RevenueGrowthPast5, EPSpast5, EPSgrowthPast5)
 
 if __name__ == '__main__': main()

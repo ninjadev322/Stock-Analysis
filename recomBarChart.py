@@ -70,7 +70,7 @@ def main ():
 	plt.legend() #Show labels
 	plt.grid(True, 'both', zorder = 0, alpha = 0.5) #show grid, zorder = 0 so that is below all the bars
 	plt.suptitle('Analyst Recomendations', weight = 'bold', fontsize = 17) #title in bold and bigger font size
-	plt.title('Data from MarketWatch', fontsize = 10)
+	plt.title('Data from MarketWatch  (Ticker: ' + Ticker.upper() + ')', fontsize = 10)
 	plt.xlabel('Timeframes', weight = 'heavy')
 	plt.ylabel('Nº of Ratings', weight = 'heavy')
 
