@@ -21,6 +21,33 @@ def sumList(list1:List[int], totalList = 0) -> int:
 		totalList += element
 	return totalList	
 
+def ProfitMarginGrowth(RevenuePast5:List[float], NetIncomePast5:List[float]) -> float:
+	#we calculate the profit margins year over year for 
+	if len(RevenuePast5) >= 2 and len(NetIncomePast5) >= 2:
+		if len(RevenuePast5) == len(NetIncomePast5):
+			#first we calculate the profit margin of the first year and then the current year
+			ProfitMarginStart = NetIncomePast5[0] / RevenuePast5[0] 
+			ProfitMarginEnd = NetIncomePast5[-1] / RevenuePast5[-1]
+			#Now we calculate the growth if this in all the years and then use a root with the length of years as the exponent the calculate year of year growth
+			#to not get complex numbers we separate the positive and negative cases
+			ProfitMarginGrowth = (ProfitMarginEnd * 100 / ProfitMarginStart) - 100
+			if ProfitMarginGrowth < 0:
+				ProfitMarginGrowth = (-1 * ProfitMarginGrowth) ** (1 / len(RevenuePast5))
+				ProfitMarginGrowth = -1 * ProfitMarginGrowth
+			else:
+				ProfitMarginGrowth ** (1 / len(RevenuePast5))	
+			return ProfitMarginGrowth
+		else:
+			#first we calculate the profit margin of the first year and then the current year
+			ProfitMarginStart = NetIncomePast5[0] / RevenuePast5[0] 
+			ProfitMarginEnd = NetIncomePast5[-1] / RevenuePast5[-1]	
+			#Now we calculate the growth from last year to this year
+			ProfitMarginGrowth = (ProfitMarginEnd * 100 / ProfitMarginStart) - 100
+			return ProfitMarginGrowth
+	#if we dont have at least 2 years of info we cannot calculate the growth
+	else:
+		return -1
+
 def health(DebtEquity:float, LongTermLiabilities:float, NetOperatingCashFlow:float, EBIT:float, InterestExpense:float, TotalCurrentAssets:float, TotalCurrentLiabilities:float, TotalLiabilities:float, GrowthLA:float, TotalEquity:float, ShortTermDebt:float, LongTermDebt:float, TotalDebtReduction:float, GrowthDA:float, TotalAssets:float, TotalpointsHealth = 0, pointsEarnedHealth = 0) -> int:
 	#We evaluate each parameter and add points if it meets the criteria
 	#2 points if it is below 0.8 and 3 if it is below 0.4
@@ -210,7 +237,7 @@ def future(EPSNextY:float, EPSNext5Y:float, estimateRevision1:float, estimateRev
 	numHold = sumList(Hold)
 	numUnderweight = sumList(Underweight)
 	numSell = sumList(Sell)
-	#
+	#2 points if total of buy and overweight is bigger than the rest, 3 points if it is bigger than 1.5 times the rest
 	if numBuy + numOverweight >= numHold + numSell + numUnderweight:
 		pointsEarnedFuture += 2
 		print(61)
@@ -224,9 +251,74 @@ def future(EPSNextY:float, EPSNext5Y:float, estimateRevision1:float, estimateRev
 
 	return pointsEarnedFuture, TotalpointsFuture	
 
-def past(ROA:float, ROE:float, RevenuePast5:float, RevenueGrowthPast5:float, EPSpast5:float, EPSgrowthPast5:float, pointsEarnedPast = 0, TotalpointsFuture = 0)	-> float:
+def past(ROA:float, ROE:float, RevenuePast5:List[float], RevenueGrowthPast5:float, EPSpast5:float, EPSgrowthPast5:float, NetIncomePast5:List[float], pointsEarnedPast = 0, TotalpointsPast = 0)	-> float:
 	#We measure differrent values and see if it meets the established parameters, adding points in affirmative cases
-	None
+	#3 points if EPS growth has been over 10 percent and another 2 points if it is over 20 percent
+	if EPSgrowthPast5 != -1:
+		if EPSgrowthPast5 > 10:
+			print(11)
+			pointsEarnedPast += 3
+		if EPSgrowthPast5 > 20:
+			print(12)
+			pointsEarnedPast += 2
+		TotalpointsPast += 5
+	else:
+		print('Not sufficient Data for EPS Past 5 Years')	
+
+	##3 points if Revenue growth has been over 10 percent and another 2 points if it is over 20 percent
+	if RevenueGrowthPast5 != -1:
+		if RevenueGrowthPast5 > 10:
+			print(21)
+			pointsEarnedPast += 3
+		if RevenueGrowthPast5 > 20:
+			print(22)
+			pointsEarnedPast += 2
+		TotalpointsPast += 5
+	else:
+		print('Not sufficient Data for EPS Past 5 Years')
+
+	#3 points if it is over 20 percent
+	ROE = float(ROE)
+	if ROE != -1:
+		if ROE >= 20:
+			print(3)
+			pointsEarnedPast += 3
+		TotalpointsPast += 3
+	else:
+		print('Not sufficient Data for Return On Equity')
+
+	#2 points if it is over 5 percent and another one if it is over 10 percent
+	ROA = float(ROA)
+	if ROA != -1:
+		if ROA >= 5:
+			pointsEarnedPast += 2
+			print(41)
+		if ROA >= 10:
+			pointsEarnedPast += 1	
+			print(42)
+		TotalpointsPast += 3
+	else:
+		print('Not sufficient Data for Return On Assets') 							
+
+	#using a function to calculate the companies profit margins and its growth over the past years
+	ProfitMarginsGrowth = ProfitMarginGrowth(RevenuePast5, NetIncomePast5)	
+	#3 points if profit margins have grown in the past 5 years and an  additional point if it has grown substantially
+	if ProfitMarginsGrowth != -1:
+		print(ProfitMarginsGrowth)
+		if ProfitMarginsGrowth > 0:
+			print(51)
+			pointsEarnedPast += 3
+		if ProfitMarginsGrowth > 10:
+			print(52)
+			pointsEarnedPast += 1	
+		TotalpointsPast += 4	
+	else:
+		print('Not sufficient Data for Profit Margins')	
+
+	print(pointsEarnedPast)
+	print(TotalpointsPast)	
+
+	return pointsEarnedPast, TotalpointsPast
 
 
 def  main ():
@@ -287,7 +379,7 @@ def  main ():
 
 	PE, PEG, PS, PB, MarketCap, DebtEquity, Recom, InsiderTrans, InstitutionTrans, ROA, ROE, AvgVolume, Price, LastChange, PerfWeek, PerfMonth, PerfYear, YearHighPercent, EPSNextY, EPSNext5Y = fundamentalInfoFVZ(soup1)
 
-	RevenuePast5, RevenueGrowthPast5, EBITDA, EBIT, DepreciationAmortization, EPSpast5, EPSgrowthPast5, InterestExpense = IncomeStatementMW(soup2)
+	RevenuePast5, RevenueGrowthPast5, EBITDA, EBIT, DepreciationAmortization, EPSpast5, EPSgrowthPast5, InterestExpense, NetIncomePast5 = IncomeStatementMW(soup2)
 	TotalEquity, GrowthLA, GrowthDA, TotalLiabilities, TotalCurrentLiabilities, LongTermLiabilities, TotalAssets, TotalCurrentAssets, LongTermAssets, ShortTermDebt, LongTermDebt = BalanceSheet(soup3)
 	FreeCashFlow, TotalDebtReduction, NetOperatingCashFlow = CashFlow(soup4)
 
@@ -311,6 +403,6 @@ def  main ():
 	print()
 	print()
 	print()
-	pointsEarnedPast, TotalpointsPast = past(ROA, ROE, RevenuePast5, RevenueGrowthPast5, EPSpast5, EPSgrowthPast5)
+	pointsEarnedPast, TotalpointsPast = past(ROA, ROE, RevenuePast5, RevenueGrowthPast5, EPSpast5, EPSgrowthPast5, NetIncomePast5)
 
 if __name__ == '__main__': main()

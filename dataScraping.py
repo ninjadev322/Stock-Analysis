@@ -139,7 +139,7 @@ def IncomeStatementMW(soup) -> float:
         elif RevenuePast5[-1] == 'K':
                 RevenuePast5 = float(RevenuePast5[0:-1]) * 1000    
         elif RevenuePast5[i] == '-':
-            RevenuePast5.remove(RevenuePast5[i])             
+            RevenuePast5.remove(RevenuePast5[i])                      
 
     #We take the growth year to year and average it. We must take off the percentage symbol from each one to be able to do the calculations
     RevenueGrowthPast5 = 0
@@ -147,6 +147,26 @@ def IncomeStatementMW(soup) -> float:
         if IncomeStatement[i][1] != '-':
             RevenueGrowthPast5 += float(IncomeStatement[i][1][0:-1])
     RevenueGrowthPast5 = RevenueGrowthPast5 / (len(IncomeStatement.columns) - 3)   
+
+    #We check if the Depreciation and Amortization exists in the income statement, and then we isolate it and convert the number from millions
+    NetIncomePast5 = []
+    if len(IncomeStatement.loc[IncomeStatement[0] == 'Net Income Net Income']) == 1:
+        for i in range(1, len(IncomeStatement.columns) - 1):
+            NetIncome = IncomeStatement.loc[IncomeStatement[0] == 'Net Income Net Income'][i]
+            NetIncome = NetIncome[int(NetIncome.index.values)] #We dont know what position it is in so we find out and take only that specific value
+            if NetIncome[0] == '(':
+                NetIncome = '-' + NetIncome[1:-1]
+            if NetIncome[-1] == 'B':
+                NetIncome = float(NetIncome[0:-1]) * 1000000000
+            elif NetIncome[-1] == 'M':
+                NetIncome = float(NetIncome[0:-1]) * 1000000
+            elif NetIncome[-1] == 'K':
+                    NetIncome = float(NetIncome[0:-1]) * 1000    
+            elif NetIncome == '-':
+                NetIncome = -1 
+            NetIncomePast5 += [NetIncome]    
+    else:
+        NetIncomePast5 = -1 
     
     #We check if the EBITDA exists in the income statement, and then we isolate it and convert the number from millions
     EBITDA = 0
@@ -258,7 +278,7 @@ def IncomeStatementMW(soup) -> float:
         else:
             InterestExpense = -1
 
-    return RevenuePast5, RevenueGrowthPast5, EBITDA, EBIT, DepreciationAmortization, EPSpast5, EPSgrowthPast5, InterestExpense
+    return RevenuePast5, RevenueGrowthPast5, EBITDA, EBIT, DepreciationAmortization, EPSpast5, EPSgrowthPast5, InterestExpense, NetIncomePast5
 
 def BalanceSheet(soup) -> float:
     #We inspect the webpage to finde the html tags of the objects that we want
@@ -346,42 +366,41 @@ def BalanceSheet(soup) -> float:
    
     #First we retrieve the liabilities to assets ratio of the past 5 years 
     RatioLA = []
-    count = 0
     if len(Liabilities.loc[Liabilities[0] == 'Total Liabilities / Total Assets Total Liabilities / Total Assets']) == 1:       
         for i in range(1,len(Liabilities.columns) - 1):
             LA = Liabilities.loc[Liabilities[0] == 'Total Liabilities / Total Assets Total Liabilities / Total Assets'][i]
             if LA[int(LA.index.values)] != '-':
                 RatioLA += [float(LA[int(LA.index.values)][0:-1])]
-    
     #Now we calculate the growth of this ratio year over year            
     GrowthLA = 0  
     if len(RatioLA) != 0:         
-        for i in range(1, len(RatioLA)):
-            GrowthLA += ((RatioLA[i] * 100) / RatioLA[i-1]) - 100
-            count += 1
-        if count != 0:   
-            GrowthLA = GrowthLA / count
+        GrowthLA += (RatioLA[-1] * 100 / RatioLA[0]) - 100
+        GrowthLA = GrowthLA ** (1 / len(RatioLA))
+        if str(GrowthLA)[0] == '(':
+            GrowthLA = float(str(GrowthLA)[1:5])
+        else:
+            GrowthLA = float(str(GrowthLA)[:4])        
     else:
         GrowthLA = -1           
 
     #First we retrieve the Debt to assets ratio of the past 5 years 
     RatioDA = []
-    count = 0
     if len(Liabilities.loc[Liabilities[0] == 'Total Debt / Total Assets Total Debt / Total Assets']) == 1:       
         for i in range(1,len(Liabilities.columns) - 1):
             DA = Liabilities.loc[Liabilities[0] == 'Total Debt / Total Assets Total Debt / Total Assets'][i]
             if DA[int(DA.index.values)] != '-':
                 RatioDA += [float(DA[int(DA.index.values)][0:-1])]
     #Now we calculate the growth of this ratio year over year            
-    GrowthDA = 0 
-    if len(RatioDA) != 0:           
-        for i in range(1, len(RatioDA)):
-            GrowthDA += ((RatioDA[i] * 100) / RatioDA[i-1]) - 100
-            count += 1
-        if count != 0:   
-            GrowthDA = GrowthDA / count
+    GrowthDA = 0  
+    if len(RatioDA) != 0:         
+        GrowthDA += (RatioDA[-1] * 100 / RatioDA[0]) - 100
+        GrowthDA = GrowthDA ** (1 / len(RatioDA)) 
+        if str(GrowthDA)[0] == '(':
+            GrowthDA = float(str(GrowthDA)[1:5])
+        else:
+            GrowthDA = float(str(GrowthDA)[:4])     
     else:
-        GrowthDA = -1                
+        GrowthDA = -1  
 
     #We check if the Total Equity exists in the income statement, and then we isolate it and convert the number from millions or billions        
     TotalEquity = 0
@@ -709,7 +728,7 @@ def main ():
 
     PE, PEG, PS, PB, MarketCap, DebtEquity, Recom, InsiderTrans, InstitutionTrans, ROA, ROE, AvgVolume, Price, LastChange, PerfWeek, PerfMonth, PerfYear, YearHighPercent, EPSNextY, EPSNext5Y = fundamentalInfoFVZ(soup1)
 
-    RevenuePast5, RevenueGrowthPast5, EBITDA, EBIT, DepreciationAmortization, EPSpast5, EPSgrowthPast5, InterestExpense = IncomeStatementMW(soup2)
+    RevenuePast5, RevenueGrowthPast5, EBITDA, EBIT, DepreciationAmortization, EPSpast5, EPSgrowthPast5, InterestExpense, NetIncomePast5 = IncomeStatementMW(soup2)
     TotalEquity, GrowthLA, GrowthDA, TotalLiabilities, TotalCurrentLiabilities, LongTermLiabilities, TotalAssets, TotalCurrentAssets, LongTermAssets, ShortTermDebt, LongTermDebt = BalanceSheet(soup3)
     FreeCashFlow, TotalDebtReduction, NetOperatingCashFlow = CashFlow(soup4)
 
