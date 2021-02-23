@@ -285,7 +285,6 @@ def BalanceSheet(soup) -> float:
     #Transform the html to a pandas dataframe
     #Balance sheet is broken up into these two categories
     BalanceSheet = pd.read_html(str(soup), attrs={'class': 'table table--overflow align--right'}) 
-
     Assets = BalanceSheet[0]
     Assets.columns = pd.RangeIndex(0, len(Assets.columns)) #Indexing the columns as numbers so that the differences in the name of columns wont matter
     
@@ -611,7 +610,9 @@ def PriceTargets(soup) -> float:
         AverageTarget = float(priceTargets[1][3][1:].replace(',', ''))                
 
     Summary = estimates[0]
-    NumberOfRatings = int(Summary[1][2])
+    NumberOfRatings = -1
+    if type(Summary[1][2]) == str:
+        NumberOfRatings = int(Summary[1][2])
 
     return HighTarget, LowTarget, AverageTarget, NumberOfRatings
 
@@ -620,7 +621,6 @@ def EPSEstimates(soup) -> None:
     #Transform the html to a pandas dataframe
     EPSestimates = pd.read_html(str(soup), attrs={'class' : 'table table--primary'})[0]
     #We save the chart to be able to graph the estimates later 
-    print(EPSestimates)
 
     return EPSestimates
 
@@ -629,7 +629,10 @@ def RevenuesEstimates(soup) -> float:
     #Transform the html to a pandas dataframe
     RevenueEstimates = pd.read_html(str(soup), attrs={'class' : 'W(100%) M(0) BdB Bdc($seperatorColor) Mb(25px)'})[1]
     RevenueEstimates.columns = pd.RangeIndex(0, len(RevenueEstimates.columns))
-    RevenueGrowthNextY = float(RevenueEstimates[4][5][0:-1])
+    if type(RevenueEstimates[4][5]) == str:
+        RevenueGrowthNextY = float(RevenueEstimates[4][5][0:-1])
+    else:
+        RevenueGrowthNextY = -1    
 
     return RevenueGrowthNextY 
 
@@ -668,78 +671,3 @@ def Recomendations(soup) -> int:
         Sell += [int(recom.loc[recom[0] == 'Sell'][i][recom.loc[recom[0] == 'Sell'].index.values])]                        
 
     return columnNames, xValues, Buy, Overweight, Hold, Underweight, Sell
-
-
-def main ():
-    
-    Ticker = str(input('Ticker: '))
-    url1 = 'http://finviz.com/quote.ashx?t=' + Ticker
-    req1 = Request(url1, headers = {'User-Agent': 'Mozilla/5'}) #The website restricts urllib request so we must use request switching the user agent to mozilla 
-    webpage_coded1 = urlopen(req1, timeout = 4).read() #We open the page and read all the raw info
-    #webpage_decoded = webpage_coded.decode('utf-8') #Since it is coded in utf-8 we decode it to be able to process it
-
-    soup1 = BeautifulSoup(webpage_coded1, 'html.parser') #Parsing(breaking the code down into relevant info) the html code
-
-    ##################################################################################################################################################
-
-    url2 = 'https://www.marketwatch.com/investing/stock/' + Ticker + '/financials'
-    req2 = Request(url2, headers = {'User-Agent': 'Mozilla/5'}) #The website restricts urllib request so we must use request switching the user agent to mozilla 
-    webpage_coded2 = urlopen(req2, timeout = 4).read() #We open the page and read all the raw info
-    #webpage_decoded2 = webpage_coded2.decode('utf-8') #Since it is coded in utf-8 we decode it to be able to process it
-
-    soup2 = BeautifulSoup(webpage_coded2, 'html.parser') #Parsing(breaking the code down into relevant info) the html code
-
-    ##################################################################################################################################################
-
-    url3 = 'https://www.marketwatch.com/investing/stock/' + Ticker + '/financials/balance-sheet'
-    req3 = Request(url3, headers = {'User-Agent': 'Mozilla/5'}) #The website restricts urllib request so we must use request switching the user agent to mozilla 
-    webpage_coded3 = urlopen(req3, timeout = 4).read() #We open the page and read all the raw info
-    #webpage_decoded = webpage_coded.decode('utf-8') #Since it is coded in utf-8 we decode it to be able to process it
-
-    soup3 = BeautifulSoup(webpage_coded3, 'html.parser') #Parsing(breaking the code down into relevant info) the html code
-
-    ##################################################################################################################################################
-
-    url4 = 'https://www.marketwatch.com/investing/stock/' + Ticker + '/financials/cash-flow'
-    req4 = Request(url4, headers = {'User-Agent': 'Mozilla/5'}) #The website restricts urllib request so we must use request switching the user agent to mozilla 
-    webpage_coded4 = urlopen(req4, timeout = 4).read() #We open the page and read all the raw info
-    #webpage_decoded = webpage_coded.decode('utf-8') #Since it is coded in utf-8 we decode it to be able to process it
-
-    soup4 = BeautifulSoup(webpage_coded4, 'html.parser') #Parsing(breaking the code down into relevant info) the html code
-
-    ###################################################################################################################################################
-
-    url5 = 'https://www.marketwatch.com/investing/stock/' + Ticker + '/analystestimates?mod=mw_quote_tab'
-    req5 = Request(url5, headers = {'User-Agent': 'Mozilla/5'}) #The website restricts urllib request so we must use request switching the user agent to mozilla 
-    webpage_coded5 = urlopen(req5, timeout = 4).read() #We open the page and read all the raw info
-    #webpage_decoded = webpage_coded.decode('utf-8') #Since it is coded in utf-8 we decode it to be able to process it
-
-    soup5 = BeautifulSoup(webpage_coded5, 'html.parser') #Parsing(breaking the code down into relevant info) the html code
-
-    #####################################################################################################################################################
-
-    url6 = 'https://finance.yahoo.com/quote/' + Ticker + '/analysis?p=' + Ticker
-    req6 = Request(url6, headers = {'User-Agent': 'Mozilla/5'}) #The website restricts urllib request so we must use request switching the user agent to mozilla 
-    webpage_coded6 = urlopen(req6, timeout = 4).read() #We open the page and read all the raw info
-    #webpage_decoded = webpage_coded.decode('utf-8') #Since it is coded in utf-8 we decode it to be able to process it
-
-    soup6 = BeautifulSoup(webpage_coded6, 'html.parser') #Parsing(breaking the code down into relevant info) the html code
-
-
-    PE, PEG, PS, PB, MarketCap, DebtEquity, Recom, InsiderTrans, InstitutionTrans, ROA, ROE, AvgVolume, Price, LastChange, PerfWeek, PerfMonth, PerfYear, YearHighPercent, EPSNextY, EPSNext5Y = fundamentalInfoFVZ(soup1)
-
-    RevenuePast5, RevenueGrowthPast5, EBITDA, EBIT, DepreciationAmortization, EPSpast5, EPSgrowthPast5, InterestExpense, NetIncomePast5 = IncomeStatementMW(soup2)
-    TotalEquity, GrowthLA, GrowthDA, TotalLiabilities, TotalCurrentLiabilities, LongTermLiabilities, TotalAssets, TotalCurrentAssets, LongTermAssets, ShortTermDebt, LongTermDebt = BalanceSheet(soup3)
-    FreeCashFlow, TotalDebtReduction, NetOperatingCashFlow = CashFlow(soup4)
-
-    estimateRevision1, estimateRevision2 = EPSRevisions(soup5)
-    HighTarget, LowTarget, AverageTarget, NumberOfRatings = PriceTargets(soup5)
-
-    EPSestimates = EPSEstimates(soup5)
-    RevenueGrowthNextY = RevenuesEstimates(soup6)
-
-    columnNames, xValues, Buy, Overweight, Hold, Underweight, Sell = Recomendations(soup5)
-
-
-
-if __name__ == '__main__': main()

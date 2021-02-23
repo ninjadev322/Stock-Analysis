@@ -6,8 +6,8 @@
 # Version: 1.0
 #-----------------------------------------------------------------------
 
-#The objective of this code is to retrieve all the necessary information that we need by scraping different
-# webpages, so that we can later commence a full stock analysis with this info.
+#The objective of this code is to evaluate the information retrieved by webscraping and compare it to different parameters and metrics, 
+#ultimately giving it a score
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -160,7 +160,7 @@ def health(DebtEquity:float, LongTermLiabilities:float, NetOperatingCashFlow:flo
 
 	return pointsEarnedHealth, TotalpointsHealth	
 
-def future(EPSNextY:float, EPSNext5Y:float, estimateRevision1:float, estimateRevision2:float, AverageTarget:float, LowTarget:float, Buy:List[int], Overweight:List[int], Hold:List[int], Underweight:List[int], Sell:List[int], RevenueGrowthNextY:float, Price:float, pointsEarnedFuture = 0, TotalpointsFuture = 0) -> float:
+def future(EPSNextY:float, EPSNext5Y:float, estimateRevision1:float, estimateRevision2:float, AverageTarget:float, LowTarget:float, Buy:List[int], Overweight:List[int], Hold:List[int], Underweight:List[int], Sell:List[int], RevenueGrowthNextY:float, Price:float, pointsEarnedFuture = 0, TotalpointsFuture = 0) -> int:
 	#We measure differrent values and see if it meets the established parameters, adding points in affirmative cases
 	#2 points if earnings growth is over 10 percent and another 3 if it is over 20 percent
 	EPSNextY = float(EPSNextY)
@@ -251,7 +251,7 @@ def future(EPSNextY:float, EPSNext5Y:float, estimateRevision1:float, estimateRev
 
 	return pointsEarnedFuture, TotalpointsFuture	
 
-def past(ROA:float, ROE:float, RevenuePast5:List[float], RevenueGrowthPast5:float, EPSpast5:float, EPSgrowthPast5:float, NetIncomePast5:List[float], pointsEarnedPast = 0, TotalpointsPast = 0)	-> float:
+def past(ROA:float, ROE:float, RevenuePast5:List[float], RevenueGrowthPast5:float, EPSpast5:float, EPSgrowthPast5:float, NetIncomePast5:List[float], pointsEarnedPast = 0, TotalpointsPast = 0)	-> int:
 	#We measure differrent values and see if it meets the established parameters, adding points in affirmative cases
 	#3 points if EPS growth has been over 10 percent and another 2 points if it is over 20 percent
 	if EPSgrowthPast5 != -1:
@@ -304,7 +304,6 @@ def past(ROA:float, ROE:float, RevenuePast5:List[float], RevenueGrowthPast5:floa
 	ProfitMarginsGrowth = ProfitMarginGrowth(RevenuePast5, NetIncomePast5)	
 	#3 points if profit margins have grown in the past 5 years and an  additional point if it has grown substantially
 	if ProfitMarginsGrowth != -1:
-		print(ProfitMarginsGrowth)
 		if ProfitMarginsGrowth > 0:
 			print(51)
 			pointsEarnedPast += 3
@@ -320,6 +319,123 @@ def past(ROA:float, ROE:float, RevenuePast5:List[float], RevenueGrowthPast5:floa
 
 	return pointsEarnedPast, TotalpointsPast
 
+def insiders(InsiderTrans:float, InstitutionTrans:float, pointsEarnedInsiders = 0, TotalpointsInsiders = 0) -> int:
+	#We measure differrent values and see if it meets the established parameters, adding points in affirmative cases
+	#2 points if there has been positive insider transactions
+	InsiderTrans = float(InsiderTrans)
+	if InsiderTrans != -1:
+		if InsiderTrans > 0:
+			print(1)
+			pointsEarnedInsiders += 2
+		TotalpointsInsiders += 2
+	else:
+		print('Not sufficient Data for Insider Transactions')
+
+	#5 points if institution transactions have been positive and another three if they have been substantial
+	InstitutionTrans = float(InstitutionTrans)
+	if InstitutionTrans != -1:
+		if InstitutionTrans > 0:
+			print(21)
+			pointsEarnedInsiders += 5
+		if InstitutionTrans > 5:
+			print(22)
+			pointsEarnedInsiders += 3
+		TotalpointsInsiders += 8
+	else: 
+		print('Not sufficient Data for Institution Transactions')					
+			
+	print(pointsEarnedInsiders)
+	print(TotalpointsInsiders)
+
+	return pointsEarnedInsiders, TotalpointsInsiders
+
+
+def value(PE:float, PEG:float, PS:float, PB:float, YearHighPercent:float, EBITDA:float, LongTermDebt:float, ShortTermDebt:float, FreeCashFlow:float, MarketCap:float, pointsEarnedValue = 0, TotalpointsValue = 0) -> float:
+	#We measure differrent values and see if it meets the established parameters, adding points in affirmative cases
+	#3 points if PE ratio is under 20 and another 2 if it is under 15 
+	PE = float(PE)
+	if PE != -1:
+		if PE <= 20:
+			print(11)
+			pointsEarnedValue += 3
+		if PE <= 15:
+			print(12)
+			pointsEarnedValue += 2
+		TotalpointsValue += 5
+	else:
+		print('Not sufficient Data for Price to Earnings Ratio')
+
+	#3 points if PEG ratio is under 1.3 and another 2 if it is under 1 
+	PEG = float(PEG)
+	if PEG != -1:
+		if PEG <= 1.3:
+			print(21)
+			pointsEarnedValue += 2
+		if PEG <= 1:
+			print(22)
+			pointsEarnedValue += 1
+		TotalpointsValue += 5
+	else:
+		print('Not sufficient Data for Price to Earnings Growth Ratio')
+
+	#3 points if PS ratio is under 1.8 and another 1 if it is under 1 
+	PS = float(PS)
+	if PS != -1:
+		if PS <= 1.8:
+			print(31)
+			pointsEarnedValue += 2
+		if PS <= 1:
+			print(32)	
+			pointsEarnedValue += 1
+		TotalpointsValue += 3
+	else:
+		print('Not sufficient Data for Price to Sales Ratio')
+
+	#3 points if PE ratio is under 20 and another 2 if it is under 15 
+	PB = float(PB)
+	if PB != -1:
+		if PB <= 3:
+			print(41)
+			pointsEarnedValue += 2
+		if PB <= 1:
+			print(42)
+			pointsEarnedValue += 1
+		TotalpointsValue += 3
+	else:
+		print('Not sufficient Data for Price to Book Ratio')
+
+	#3 points if golden ratio is under 15 and another 2 if it is under 10
+	if EBITDA != -1 and LongTermDebt != -1 and FreeCashFlow != -1 and MarketCap	!= -1:
+		GoldenRatio = (MarketCap + LongTermDebt + ShortTermDebt - FreeCashFlow) / EBITDA
+		if GoldenRatio <= 15:
+			print(51)
+			pointsEarnedValue += 3
+		if GoldenRatio <= 10:
+			print(52)
+			pointsEarnedValue += 2
+		TotalpointsValue += 5		 		
+	else:
+		print('Not sufficient Data for Golden Ratio')
+
+	#2 points if it is more than 10 percent of its 52 week high and another one if it is more than 20 percent off
+	YearHighPercent = float(YearHighPercent)
+	if YearHighPercent != -1:
+		if YearHighPercent <= -10:
+			print(61)
+			pointsEarnedValue += 2
+		if YearHighPercent <= -20:
+			print(62)
+			pointsEarnedValue += 1
+		TotalpointsValue += 3
+	else:
+		print('Not sufficient Data for 52 Week High')	
+
+	#2 stage discounted cash flow			
+
+	print(pointsEarnedValue)
+	print(TotalpointsValue)
+
+	return pointsEarnedValue, TotalpointsValue
 
 def  main ():
 
@@ -394,15 +510,28 @@ def  main ():
     ############################################################################################################################################
     ############################################################################################################################################
     ############################################################################################################################################
-
+	print('Health')
 	pointsEarnedHealth, TotalpointsHealth = health(DebtEquity, LongTermLiabilities, NetOperatingCashFlow, EBIT, InterestExpense, TotalCurrentAssets, TotalCurrentLiabilities, TotalLiabilities, GrowthLA, TotalEquity, ShortTermDebt, LongTermDebt, TotalDebtReduction, GrowthDA, TotalAssets)
 	print()
 	print()
 	print()
+	print('Future')
 	pointsEarnedFuture, TotalpointsFuture = future(EPSNextY, EPSNext5Y, estimateRevision1, estimateRevision2, AverageTarget, LowTarget, Buy, Overweight, Hold, Underweight, Sell, RevenueGrowthNextY, Price)
 	print()
 	print()
 	print()
+	print('Past')
 	pointsEarnedPast, TotalpointsPast = past(ROA, ROE, RevenuePast5, RevenueGrowthPast5, EPSpast5, EPSgrowthPast5, NetIncomePast5)
+	print()
+	print()
+	print()
+	print('Insiders')
+	pointsEarnedInsiders, TotalpointsInsiders = insiders(InsiderTrans, InstitutionTrans)
+	print()
+	print()
+	print()
+	print('Value')
+	pointsEarnedValue, TotalpointsValue = value(PE, PEG, PS, PB, YearHighPercent, EBITDA, LongTermDebt, ShortTermDebt, FreeCashFlow, MarketCap)
+
 
 if __name__ == '__main__': main()
