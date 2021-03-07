@@ -36,46 +36,56 @@ def main ():
 
 	#####################################################################################################################################
 
+	check = True
 	#We first get all the necessary info from the dataScraping file
-	columnNames, xValues, Buy, Overweight, Hold, Underweight, Sell = Recomendations(soup5)
-
-	#Now we plot all the bars for all the different ratinga from 3m , 1m and current
-	for i in range(len(columnNames)):
-		#to put one on top of another we must plot the first with a value of the sum of all ratings and reduce it after each bar
-		#we chose specific color to make it easier to understand visually
-		plt.bar(i + 1, Buy[i] + Overweight[i] + Hold[i] + Underweight[i] + Sell[i], color = (0, 0.5, 0.2), width = 0.3, zorder = 3)
-		plt.bar(i + 1, Overweight[i] + Hold[i] + Underweight[i] + Sell[i], color = (0, 0.8, 0.2), width = 0.3, zorder = 3)
-		plt.bar(i + 1, Hold[i] + Underweight[i] + Sell[i], color = (0.9, 0.9, 0), width = 0.3, zorder = 3)
-		plt.bar(i + 1, Underweight[i] + Sell[i], color = (1, 0.6, 0), width = 0.3, zorder = 4)
-		plt.bar(i + 1, Sell[i], color = (0.8, 0, 0), width = 0.3, zorder = 5)
-
-	#we werent able to label before because it was in a for i in range
-	#we create empty bars but with the respective labels and colors
-	#We also add the values of each rating to give more info	
-	plt.bar(0, 0, color = (0, 0.5, 0.2), label = 'Buy   ' + str(Buy), width = 0)	
-	plt.bar(0, 0, color = (0, 0.8, 0.2), label = 'Overweight   ' + str(Overweight), width = 0)	
-	plt.bar(0, 0, color = (0.9, 0.9, 0), label = 'Hold   ' + str(Hold), width = 0)	
-	plt.bar(0, 0, color = (1, 0.6, 0), label = 'Underweight   ' + str(Underweight), width = 0)	
-	plt.bar(0, 0, color = (0.8, 0, 0), label = 'Sell   ' + str(Sell), width = 0)	
-
-	#Name the x values with the respective time frames		
-	index = np.arange(len(columnNames)) #Gives us an array of evenly spaced numbers in our chosen interval		
-	plt.xticks(index + 1, columnNames)
-
-	#We calculate the timeframe with the most amount of ratings and limit the graph to a little above that
-	numberOfRatings = mostRatings(Buy, Overweight, Hold, Underweight, Sell, columnNames)
-	plt.ylim(0, (1.5 * numberOfRatings) // 1)
+	try:
+		columnNames, xValues, Buy, Overweight, Hold, Underweight, Sell, check = Recomendations(soup5)
 	
+	if not check:
+		print('Not able to find sufficient Data for this Ticker...')	
 
-	plt.legend() #Show labels
-	plt.grid(True, 'both', zorder = 0, alpha = 0.5) #show grid, zorder = 0 so that is below all the bars
-	plt.suptitle('Analyst Recomendations', weight = 'bold', fontsize = 17) #title in bold and bigger font size
-	plt.title('Data from MarketWatch  (Ticker: ' + Ticker.upper() + ')', fontsize = 10)
-	plt.xlabel('Timeframes', weight = 'heavy')
-	plt.ylabel('Nº of Ratings', weight = 'heavy')
+	else:	
+		#Now we plot all the bars for all the different ratinga from 3m , 1m and current
+		for i in range(len(columnNames)):
+			#to put one on top of another we must plot the first with a value of the sum of all ratings and reduce it after each bar
+			#we chose specific color to make it easier to understand visually
+			plt.bar(i + 1, Buy[i] + Overweight[i] + Hold[i] + Underweight[i] + Sell[i], color = (0, 0.5, 0.2), width = 0.3, zorder = 3)
+			plt.bar(i + 1, Overweight[i] + Hold[i] + Underweight[i] + Sell[i], color = (0, 0.8, 0.2), width = 0.3, zorder = 3)
+			plt.bar(i + 1, Hold[i] + Underweight[i] + Sell[i], color = (0.9, 0.9, 0), width = 0.3, zorder = 3)
+			plt.bar(i + 1, Underweight[i] + Sell[i], color = (1, 0.6, 0), width = 0.3, zorder = 4)
+			plt.bar(i + 1, Sell[i], color = (0.8, 0, 0), width = 0.3, zorder = 5)
 
-	#Graph bar chart
-	plt.show()	
+		#we werent able to label before because it was in a for i in range
+		#we create empty bars but with the respective labels and colors
+		#We also add the values of each rating to give more info	
+		plt.bar(0, 0, color = (0, 0.5, 0.2), label = 'Buy   ' + str(Buy), width = 0)	
+		plt.bar(0, 0, color = (0, 0.8, 0.2), label = 'Overweight   ' + str(Overweight), width = 0)	
+		plt.bar(0, 0, color = (0.9, 0.9, 0), label = 'Hold   ' + str(Hold), width = 0)	
+		plt.bar(0, 0, color = (1, 0.6, 0), label = 'Underweight   ' + str(Underweight), width = 0)	
+		plt.bar(0, 0, color = (0.8, 0, 0), label = 'Sell   ' + str(Sell), width = 0)	
+
+		#Name the x values with the respective time frames		
+		index = np.arange(len(columnNames)) #Gives us an array of evenly spaced numbers in our chosen interval		
+		plt.xticks(index + 1, columnNames)
+
+		#We calculate the timeframe with the most amount of ratings and limit the graph to a little above that
+		numberOfRatings = mostRatings(Buy, Overweight, Hold, Underweight, Sell, columnNames)
+		plt.ylim(0, (1.5 * numberOfRatings) // 1)
+
+		#set the label size for both tick axis
+		plt.tick_params(axis = 'both', which = 'both', labelsize = 5)
+		
+
+		plt.legend(fontsize = 5) #Show labels
+		plt.grid(True, 'both', zorder = 0, alpha = 0.5) #show grid, zorder = 0 so that is below all the bars
+		plt.suptitle('Analyst Recomendations', weight = 'bold', fontsize = 9) #title in bold and bigger font size
+		plt.title('Data from MarketWatch  (Ticker: ' + Ticker.upper() + ')', fontsize = 5)
+		plt.xlabel('Timeframes', weight = 'heavy', fontsize = 7, labelpad = 2)
+		plt.ylabel('Nº of Ratings', weight = 'heavy', fontsize = 7, labelpad = 2)
+
+		#Graph bar chart
+		plt.get_current_fig_manager().window.setGeometry(0, 0, 350, 300)
+		plt.show()	
 
 
 
