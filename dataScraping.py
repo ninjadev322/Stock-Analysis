@@ -505,7 +505,7 @@ def BalanceSheet(soup, TotalEquity = -1, GrowthLA = -1, GrowthDA = -1, TotalLiab
         if len(Liabilities.loc[Liabilities[0] == 'Total Debt / Total Assets Total Debt / Total Assets']) == 1:
             for i in range(1, len(Liabilities.columns) - 1):
                 DA = Liabilities.loc[Liabilities[0] == 'Total Debt / Total Assets Total Debt / Total Assets'][i]
-                if DA[int(DA.index.values)] != '-':
+                if DA[int(DA.index.values)] != '-'  and DA[int(DA.index.values)][0] != '0':
                     RatioDA += [float((DA[int(DA.index.values)].replace(',', ''))[0:-1])]
         # Now we calculate the growth of this ratio year over year
         GrowthDA = 0
