@@ -2,7 +2,7 @@
 # revenueEarningsChart.py
 # Description:
 # Author: André Luiz Queiroz Costa
-# Date: 12/02/2020
+# Date: 06/03/2020
 # Version: 1.0
 #-----------------------------------------------------------------------
 
@@ -14,7 +14,7 @@ import numpy as np
 from typing import List
 from dataScraping import *
 
-def shares(soup)-> float:
+def shares(soup, sharesOutstanding = -1)-> float:
 	# We inspect the webpage to finde the html tags of the pbjects that we want
     # Transforms the html to a pandas dataframe
     check = True
@@ -52,41 +52,12 @@ def year(soup, years = []) -> List[str]:
 
     return years	
     	
-def main ():
-	check = True
-	try:
-		#First we access to website with an url request
-		Ticker = str(input('Ticker: '))
-		url1 = 'https://www.marketwatch.com/investing/stock/' + Ticker + '/financials'
-		req1 = Request(url1, headers = {'User-Agent': 'Mozilla/5'}) #The website restricts urllib request so we must use request switching the user agent to mozilla 
-		webpage_coded1 = urlopen(req1, timeout = 1).read() #We open the page and read all the raw info
-	    #webpage_decoded = webpage_coded.decode('utf-8') #Since it is coded in utf-8 we decode it to be able to process it
+def REchart(Ticker:str, RevenuePast5:List[float], NetIncomePast5:List[float], soup1, soup2):
+	#retrieves all the info and data we need for the chart
+	years = year(soup1)
+	sharesOutstanding = shares(soup2)
 
-		soup1 = BeautifulSoup(webpage_coded1, 'html.parser') #Parsing(breaking the code down into relevant info the html code
-
-		#####################################################################################################################################
-
-		url2 = 'http://finviz.com/quote.ashx?t=' + Ticker
-		req2 = Request(url2, headers = {'User-Agent': 'Mozilla/5'}) #The website restricts urllib request so we must use request switching the user agent to mozilla 
-		webpage_coded2 = urlopen(req2, timeout = 4).read() #We open the page and read all the raw info
-	    #webpage_decoded = webpage_coded.decode('utf-8') #Since it is coded in utf-8 we decode it to be able to process it
-
-		soup2 = BeautifulSoup(webpage_coded2, 'html.parser') #Parsing(breaking the code down into relevant info the html code
-
-		#####################################################################################################################################
-
-	except:
-		#tell the user that we cannot analize this ticker
-		print('Not sufficient Data for this Ticker...')
-		check = False
-
-
-	if check:
-		#retrieves all the info and data we need for the chart
-		RevenuePast5, RevenueGrowthPast5, EBITDA, EBIT, DepreciationAmortization, EPSpast5, EPSgrowthPast5, InterestExpense, NetIncomePast5 = IncomeStatementMW(soup1)
-		sharesOutstanding = shares(soup2)
-		years = year(soup1)
-
+	if len(RevenuePast5) != 0 and len(NetIncomePast5) != 0 and sharesOutstanding != -1:
 		#Now we plot all the bars for all the different ratinga from 3m , 1m and current
 		for i in range(len(years)):
 			#to put one on top of another we must plot the first with a value of the sum of all ratings and reduce it after each bar
@@ -119,8 +90,9 @@ def main ():
 		plt.ylabel('$$$', weight = 'heavy', fontsize = 7, labelpad = 2)
 
 		#Graph bar chart
-		plt.get_current_fig_manager().window.setGeometry(350, 0, 350, 300)
-		plt.show()	
+		plt.get_current_fig_manager().window.setGeometry(315, -35, 325, 300)
+		#plt.show()
 
+	else:
+		print('Not sufficient Data for Revenue and Net Income for past 5 Years')		
 
-if __name__ == '__main__': main()

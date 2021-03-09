@@ -24,27 +24,9 @@ def mostRatings(Buy:List[int], Overweight:List[int], Hold:List[int], Underweight
 
 	return numberOfRatings		
 
-def main ():
-	#First we access to website with an url request
-	Ticker = str(input('Ticker: '))
-	url5 = 'https://www.marketwatch.com/investing/stock/' + Ticker + '/analystestimates?mod=mw_quote_tab'
-	req5 = Request(url5, headers = {'User-Agent': 'Mozilla/5'}) #The website restricts urllib request so we must use request switching the user agent to mozilla 
-	webpage_coded5 = urlopen(req5, timeout = 4).read() #We open the page and read all the raw info
-    #webpage_decoded = webpage_coded.decode('utf-8') #Since it is coded in utf-8 we decode it to be able to process it
-
-	soup5 = BeautifulSoup(webpage_coded5, 'html.parser') #Parsing(breaking the code down into relevant info the html code
-
-	#####################################################################################################################################
-
-	check = True
+def RBchart(Ticker:str, columnNames:List[str], Buy:List[int], Overweight:List[int], Hold:List[int], Underweight:List[int], Sell:List[int]):
 	#We first get all the necessary info from the dataScraping file
-	try:
-		columnNames, xValues, Buy, Overweight, Hold, Underweight, Sell, check = Recomendations(soup5)
-	
-	if not check:
-		print('Not able to find sufficient Data for this Ticker...')	
-
-	else:	
+	if len(columnNames) != 0: 
 		#Now we plot all the bars for all the different ratinga from 3m , 1m and current
 		for i in range(len(columnNames)):
 			#to put one on top of another we must plot the first with a value of the sum of all ratings and reduce it after each bar
@@ -84,9 +66,10 @@ def main ():
 		plt.ylabel('Nº of Ratings', weight = 'heavy', fontsize = 7, labelpad = 2)
 
 		#Graph bar chart
-		plt.get_current_fig_manager().window.setGeometry(0, 0, 350, 300)
-		plt.show()	
+		plt.get_current_fig_manager().window.setGeometry(-7, -35, 322, 300)
+		#plt.show()	
+
+	else:
+		print('Not sufficient Data for Analyst Recomendations')	
 
 
-
-if __name__ == '__main__': main()

@@ -778,11 +778,6 @@ def PriceTargets(soup, HighTarget = -1, LowTarget = -1, AverageTarget = -1, Numb
 
     if check:       
         priceTargets = estimates[1]
-        # We initialize the variables
-        HighTarget = -1
-        LowTarget = -1
-        AverageTarget = -1
-
         # Must make sure that they are not NaN
         if type(priceTargets[1][0]) == str:
             # We must check if it contains a , so that we can remove it
