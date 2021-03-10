@@ -7,3 +7,4 @@
  -seaborn
  - bs4 (BeautifulSoup)
  -matplotlib
+ -colorama
