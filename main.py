@@ -120,17 +120,29 @@ def main ():
 
 		################################################################################################################################	
 
-		print(f'Value: {round(pointsEarnedValue * 10 / TotalpointsValue, 2)} ({pointsEarnedValue}/{TotalpointsValue})' + 3*'\t' + f'Health: {pointsEarnedHealth * 10 / TotalpointsHealth} ({pointsEarnedHealth}/{TotalpointsHealth})')
-		print(Fore.GREEN + Style.BRIGHT + f'PE: {PE} (<23 is a Good PE)' + Style.RESET_ALL if float(PE) <= 23 else Fore.RED + Style.BRIGHT + f'PE: {PE} (<23 is a Good PE)' + Style.RESET_ALL , end = '')
-		print(2*'\t' + f'Debt/Equity: {round(float(DebtEquity), 2)} (<0.4 is a Good DE Ratio)')
-		print(f'PEG: {PEG} (<1.3 is a Good PEG)' + 2*'\t' + f'InterestExpense/EBIT: {round(RatioLE, 2)} (<0.33 is a Good IEE Ratio)')
-		print(f'PS: {PS} (<1.8 is a Good PS)' + 2*'\t' + f'NetOperatingCashFlow/Debt: {round(RatioFD, 2)} (>0.5 is a Good NOCFD Ratio)')
-		print(f'PB: {PB} (<3 is a Good PB)' + 2*'\t' + f'CurrentLiabilities/CurrentAssets: {round(RatioLA, 2)} (<1 is a Good CLCA Ratio)')
-		print(f'Golden Ratio: {round(GoldenRatio, 2)}' + 3*'\t' + f'LongTermLiabilities/CurrentAssets: {round(RatioLA2, 2)} (<1.25 is a Good LTLCA Ratio)')
-		print(f'Year High Percent: {YearHighPercent}' + 2*'\t' + f'Liabilities&Equity/Assets: {round(RatioLA3, 2)} (<1 is a Good LEA Ratio)')
-		print(5*'\t' + f'Growth Liabilities/Assets: {GrowthLA} (<0 is a Good LA Growth)')
-		print(5*'\t' + f'Growth Debt/Assets: {GrowthDA} (<0 is a Good DA Growth)')
-		print(5*'\t' + f'Debt Reduction: {TotalDebtReduction} (<0 is a Good Debt Reduction)')
+		print(f'Value: {round(pointsEarnedValue * 10 / TotalpointsValue, 2)} ({pointsEarnedValue}/{TotalpointsValue})' + 4*'\t' + f'Health: {pointsEarnedHealth * 10 / TotalpointsHealth} ({pointsEarnedHealth}/{TotalpointsHealth})')
+
+		print(Fore.GREEN + Style.BRIGHT + f'PE: {PE} (<23, <15)' + Style.RESET_ALL if float(PE) <= 23 and float(PE) != -1 else Fore.RED + Style.BRIGHT + f'PE: {PE} (<23, <15)' + Style.RESET_ALL , end = '')
+		print(4*'\t' + Fore.GREEN + Style.BRIGHT + f'Debt/Equity: {round(float(DebtEquity), 2)} (<0.8, <0.4)' + Style.RESET_ALL if float(DebtEquity) <= 0.8 and float(DebtEquity) != -1 else 4*'\t' + Fore.RED + Style.BRIGHT + f'Debt/Equity: {round(float(DebtEquity), 2)} (<0.8, <0.4)' + Style.RESET_ALL)
+		
+		print(Fore.GREEN + Style.BRIGHT + f'PEG: {PEG} (<1.3, <1)' + Style.RESET_ALL if float(PEG) <= 1.3 and float(PEG) != -1 else Fore.RED + Style.BRIGHT + f'PEG: {PEG} (<1.3, <1)', end = '')
+		print(4*'\t' + Fore.GREEN + Style.BRIGHT + f'InterestExpense/EBIT: {round(RatioLE, 2)} (<0.33)' + Style.RESET_ALL if RatioLE <= 0.33 and RatioLE != -1 else 4*'\t' + Fore.RED + Style.BRIGHT + f'InterestExpense/EBIT: {round(RatioLE, 2)} (<0.33)' + Style.RESET_ALL)
+		
+		print(Fore.GREEN + Style.BRIGHT + f'PS: {PS} (<1.8, <1)' + Style.RESET_ALL if float(PS) <= 1.8 and float(PS) != -1 else Fore.RED + Style.BRIGHT + f'PS: {PS} (<1.8, <1)' + Style.RESET_ALL, end = '')		
+		print(4*'\t' + Fore.GREEN + Style.BRIGHT + f'NetOperatingCashFlow/Debt: {round(RatioFD, 2)} (>0.25, >0.5, >1)' + Style.RESET_ALL if RatioFD >= 0.5 else 4*'\t' + Fore.RED + Style.BRIGHT + f'NetOperatingCashFlow/Debt: {round(RatioFD, 2)} (>0.25, >0.5, >1)' + Style.RESET_ALL)
+
+		print(Fore.GREEN + Style.BRIGHT + f'PB: {PB} (<3, <1)' + Style.RESET_ALL if float(PB) <= 3 and float(PB) != -1 else Fore.RED + Style.BRIGHT + f'PB: {PB} (<3, <1)' + Style.RESET_ALL, end = '')
+		print(4*'\t' + Fore.GREEN + Style.BRIGHT + f'CurrentLiabilities/CurrentAssets: {round(RatioLA, 2)} (<1)' + Style.RESET_ALL if RatioLA < 1 and RatioLA != -1 else 4*'\t' + Fore.RED + Style.BRIGHT + f'CurrentLiabilities/CurrentAssets: {round(RatioLA, 2)} (<1)' + Style.RESET_ALL)
+
+		print(Fore.GREEN + Style.BRIGHT + f'Golden Ratio: {round(GoldenRatio, 2)} (<15, <10)' + Style.RESET_ALL if GoldenRatio < 15 and GoldenRatio != -1 else Fore.RED + Style.BRIGHT + f'Golden Ratio: {round(GoldenRatio, 2)} (<15, <10)' + Style.RESET_ALL, end = '') 
+		print(3*'\t' + Fore.GREEN + Style.BRIGHT + f'LongTermLiabilities/CurrentAssets: {round(RatioLA2, 2)} (<1.25, <1)' + Style.RESET_ALL if RatioLA2 <= 1.25 and RatioLA2 != -1 else 3*'\t' + Fore.RED + Style.BRIGHT + f'LongTermLiabilities/CurrentAssets: {round(RatioLA2, 2)} (<1.25, <1)' + Style.RESET_ALL)
+
+		print(Fore.GREEN + Style.BRIGHT + f'-% 52WHigh: {YearHighPercent} (<-10, <-20)' + Style.RESET_ALL if float(YearHighPercent) <= -10 else Fore.RED + Style.BRIGHT + f'-% 52WHigh: {YearHighPercent} (<-10, <-20)' + Style.RESET_ALL, end = '')
+		print(3*'\t' + Fore.GREEN + Style.BRIGHT + f'Liabilities&Equity/Assets: {round(RatioLA3, 2)} (<1)' + Style.RESET_ALL if RatioLA3 < 1 and RatioLA3 != -1 else 3*'\t' + Fore.RED + Style.BRIGHT + f'Liabilities&Equity/Assets: {round(RatioLA3, 2)} (<1)' + Style.RESET_ALL)
+		
+		print(6*'\t' + Fore.GREEN + Style.BRIGHT + f'Growth Liabilities/Assets: {GrowthLA} (<0)' + Style.RESET_ALL if GrowthLA < 0 and GrowthLA != -1 else 6*'\t' + Fore.RED + Style.BRIGHT + f'Growth Liabilities/Assets: {GrowthLA} (<0)' + Style.RESET_ALL)
+		print(6*'\t' + Fore.GREEN + Style.BRIGHT + f'Growth Debt/Assets: {GrowthDA} (<0)' + Style.RESET_ALL if GrowthDA < 0 and GrowthDA != -1 else 6*'\t' + Fore.RED + Style.BRIGHT + f'Growth Debt/Assets: {GrowthDA} (<0)' + Style.RESET_ALL)
+		print(6*'\t' + Fore.GREEN + Style.BRIGHT + f'Debt Reduction: {TotalDebtReduction} (<0)' + Style.RESET_ALL if TotalDebtReduction < 0 and TotalDebtReduction != -1 else 6*'\t' + Fore.RED + Style.BRIGHT + f'Debt Reduction: {TotalDebtReduction} (<0)' + Style.RESET_ALL)
 
 		#we define different figures for each chart and then place them in different parts of the screen
 		#plt.figure(1)
