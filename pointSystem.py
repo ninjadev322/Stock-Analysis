@@ -66,6 +66,7 @@ def health(DebtEquity:float, LongTermLiabilities:float, NetOperatingCashFlow:flo
 		TotalpointsHealth += 5
 
 	#3 Points if EBIT covers 33% of Interest Expense
+	RatioLE = -1
 	if EBIT != -1:
 		#Calculate ratio
 		if EBIT != 0:
@@ -77,6 +78,7 @@ def health(DebtEquity:float, LongTermLiabilities:float, NetOperatingCashFlow:flo
 			TotalpointsHealth += 2	
 
 	#3 points if free cash flow covers half of total liabilities and 2 points if it covers all if it
+	RatioFD = -1
 	if NetOperatingCashFlow != -1 and LongTermDebt != -1:
 		#Calculate ratio
 		if LongTermDebt + ShortTermDebt != 0:
@@ -92,6 +94,7 @@ def health(DebtEquity:float, LongTermLiabilities:float, NetOperatingCashFlow:flo
 			pointsEarnedHealth += 5
 			TotalpointsHealth += 5	
 
+	RatioLA = -1
 	if TotalCurrentAssets != -1 and TotalCurrentLiabilities != -1:
 		#Calculate Ratio
 		RatioLA = TotalCurrentLiabilities / TotalCurrentAssets
@@ -100,6 +103,7 @@ def health(DebtEquity:float, LongTermLiabilities:float, NetOperatingCashFlow:flo
 		TotalpointsHealth += 3
 
 	#3 points if current assets is equal or bigger than long term liabilities and 2 points if it at most 25% smaller
+	RatioLA2 = -1
 	if TotalCurrentAssets != -1 and LongTermLiabilities != -1:
 		#Calculate Ratio
 		RatioLA2 = LongTermLiabilities / TotalCurrentAssets
@@ -111,10 +115,11 @@ def health(DebtEquity:float, LongTermLiabilities:float, NetOperatingCashFlow:flo
 
 	#In case that previous two measurements dont work we use another one with similar parameters but less importance
 	#2 points if assets cover liabilities and equity
+	RatioLA3 = -1
 	if TotalCurrentAssets == -1 or TotalCurrentLiabilities == -1 or LongTermLiabilities == -1:
 		if TotalAssets != -1 and TotalLiabilities != -1:
 			RatioLA3 = (TotalLiabilities + TotalEquity) / TotalAssets
-			if RatioLA3 > 1:
+			if RatioLA3 < 1:
 				pointsEarnedHealth += 2
 			TotalpointsHealth += 2
 
@@ -138,7 +143,7 @@ def health(DebtEquity:float, LongTermLiabilities:float, NetOperatingCashFlow:flo
 			pointsEarnedHealth += 3
 		TotalpointsHealth += 3
 
-	return pointsEarnedHealth, TotalpointsHealth
+	return pointsEarnedHealth, TotalpointsHealth, RatioLE, RatioFD, RatioLA, RatioLA2, RatioLA3
 
 def future(EPSNextY:float, EPSNext5Y:float, estimateRevision1:float, estimateRevision2:float, AverageTarget:float, LowTarget:float, Buy:List[int], Overweight:List[int], Hold:List[int], Underweight:List[int], Sell:List[int], RevenueGrowthNextY:float, Price:float, pointsEarnedFuture = 0, TotalpointsFuture = 0) -> int:
 	#We measure differrent values and see if it meets the established parameters, adding points in affirmative cases
@@ -278,7 +283,7 @@ def value(PE:float, PEG:float, PS:float, PB:float, YearHighPercent:float, EBITDA
 	#3 points if PE ratio is under 20 and another 2 if it is under 15
 	PE = float(PE)
 	if PE != -1:
-		if PE <= 20:
+		if PE <= 23:
 			pointsEarnedValue += 3
 		if PE <= 15:
 			pointsEarnedValue += 2
@@ -295,7 +300,7 @@ def value(PE:float, PEG:float, PS:float, PB:float, YearHighPercent:float, EBITDA
 			pointsEarnedValue += 2
 		if PEG <= 1:
 			pointsEarnedValue += 1
-		TotalpointsValue += 5
+		TotalpointsValue += 3
 
 	#3 points if PS ratio is under 1.8 and another 1 if it is under 1
 	PS = float(PS)
@@ -316,6 +321,7 @@ def value(PE:float, PEG:float, PS:float, PB:float, YearHighPercent:float, EBITDA
 		TotalpointsValue += 3
 
 	#3 points if golden ratio is under 15 and another 2 if it is under 10
+	GoldenRatio = -1
 	if EBITDA != -1 and LongTermDebt != -1 and FreeCashFlow != -1 and MarketCap	!= -1:
 		GoldenRatio = (MarketCap + LongTermDebt + ShortTermDebt - FreeCashFlow) / EBITDA
 		if GoldenRatio <= 15:
@@ -335,5 +341,5 @@ def value(PE:float, PEG:float, PS:float, PB:float, YearHighPercent:float, EBITDA
 
 	#2 stage discounted cash flow
 
-	return pointsEarnedValue, TotalpointsValue
+	return pointsEarnedValue, TotalpointsValue, GoldenRatio
 

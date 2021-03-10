@@ -14,6 +14,10 @@ from pointSystem import *
 from revenueEarningsChart import *
 from priceTargetChart import *
 from recomBarChart import *
+import colorama
+from colorama import Fore, Style 
+
+colorama.init()
 
 def accessWeb(Ticker:str):
 
@@ -108,22 +112,35 @@ def main ():
 
 		###############################################################################################################################
 
-		pointsEarnedHealth, TotalpointsHealth = health(DebtEquity, LongTermLiabilities, NetOperatingCashFlow, EBIT, InterestExpense, TotalCurrentAssets, TotalCurrentLiabilities, TotalLiabilities, GrowthLA, TotalEquity, ShortTermDebt, LongTermDebt, TotalDebtReduction, GrowthDA, TotalAssets)
+		pointsEarnedHealth, TotalpointsHealth, RatioLE, RatioFD, RatioLA, RatioLA2, RatioLA3 = health(DebtEquity, LongTermLiabilities, NetOperatingCashFlow, EBIT, InterestExpense, TotalCurrentAssets, TotalCurrentLiabilities, TotalLiabilities, GrowthLA, TotalEquity, ShortTermDebt, LongTermDebt, TotalDebtReduction, GrowthDA, TotalAssets)
 		pointsEarnedFuture, TotalpointsFuture = future(EPSNextY, EPSNext5Y, estimateRevision1, estimateRevision2, AverageTarget, LowTarget, Buy, Overweight, Hold, Underweight, Sell, RevenueGrowthNextY, Price)
 		pointsEarnedPast, TotalpointsPast = past(ROA, ROE, RevenuePast5, RevenueGrowthPast5, EPSpast5, EPSgrowthPast5, NetIncomePast5)
 		pointsEarnedInsiders, TotalpointsInsiders = insiders(InsiderTrans, InstitutionTrans)
-		pointsEarnedValue, TotalpointsValue = value(PE, PEG, PS, PB, YearHighPercent, EBITDA, LongTermDebt, ShortTermDebt, FreeCashFlow, MarketCap, NetIncomePast5)
+		pointsEarnedValue, TotalpointsValue, GoldenRatio = value(PE, PEG, PS, PB, YearHighPercent, EBITDA, LongTermDebt, ShortTermDebt, FreeCashFlow, MarketCap, NetIncomePast5)
 
 		################################################################################################################################	
 
-		plt.figure(1)
-		RBchart(Ticker, columnNames, Buy, Overweight, Hold, Underweight, Sell)
-		plt.figure(2)
-		REchart(Ticker, RevenuePast5, NetIncomePast5, soup2, soup1)
-		plt.figure(3)
-		PTchart(Ticker, Price, HighTarget, LowTarget, AverageTarget, NumberOfRatings)
+		print(f'Value: {round(pointsEarnedValue * 10 / TotalpointsValue, 2)} ({pointsEarnedValue}/{TotalpointsValue})' + 3*'\t' + f'Health: {pointsEarnedHealth * 10 / TotalpointsHealth} ({pointsEarnedHealth}/{TotalpointsHealth})')
+		print(Fore.GREEN + Style.BRIGHT + f'PE: {PE} (<23 is a Good PE)' + Style.RESET_ALL if float(PE) <= 23 else Fore.RED + Style.BRIGHT + f'PE: {PE} (<23 is a Good PE)' + Style.RESET_ALL , end = '')
+		print(2*'\t' + f'Debt/Equity: {round(float(DebtEquity), 2)} (<0.4 is a Good DE Ratio)')
+		print(f'PEG: {PEG} (<1.3 is a Good PEG)' + 2*'\t' + f'InterestExpense/EBIT: {round(RatioLE, 2)} (<0.33 is a Good IEE Ratio)')
+		print(f'PS: {PS} (<1.8 is a Good PS)' + 2*'\t' + f'NetOperatingCashFlow/Debt: {round(RatioFD, 2)} (>0.5 is a Good NOCFD Ratio)')
+		print(f'PB: {PB} (<3 is a Good PB)' + 2*'\t' + f'CurrentLiabilities/CurrentAssets: {round(RatioLA, 2)} (<1 is a Good CLCA Ratio)')
+		print(f'Golden Ratio: {round(GoldenRatio, 2)}' + 3*'\t' + f'LongTermLiabilities/CurrentAssets: {round(RatioLA2, 2)} (<1.25 is a Good LTLCA Ratio)')
+		print(f'Year High Percent: {YearHighPercent}' + 2*'\t' + f'Liabilities&Equity/Assets: {round(RatioLA3, 2)} (<1 is a Good LEA Ratio)')
+		print(5*'\t' + f'Growth Liabilities/Assets: {GrowthLA} (<0 is a Good LA Growth)')
+		print(5*'\t' + f'Growth Debt/Assets: {GrowthDA} (<0 is a Good DA Growth)')
+		print(5*'\t' + f'Debt Reduction: {TotalDebtReduction} (<0 is a Good Debt Reduction)')
 
-		plt.show()
+		#we define different figures for each chart and then place them in different parts of the screen
+		#plt.figure(1)
+		#RBchart(Ticker, columnNames, Buy, Overweight, Hold, Underweight, Sell)
+		#plt.figure(2)
+		#REchart(Ticker, RevenuePast5, NetIncomePast5, soup2, soup1)
+		#plt.figure(3)
+		#PTchart(Ticker, Price, HighTarget, LowTarget, AverageTarget, NumberOfRatings)
+
+		#plt.show()
 
 
 if __name__ == '__main__': main() 
