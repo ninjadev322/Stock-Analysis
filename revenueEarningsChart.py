@@ -6,7 +6,7 @@
 # Version: 1.0
 #-----------------------------------------------------------------------
 
-#The objective of the code is to take alll the recommendation info from the datascraping file and visualize it with a bar chart
+#The objective of the code is to take all the revenue and earnings info for the past years and represent it with a barchart
 
 import matplotlib.pyplot as plt
 import pandas as pd

@@ -6,7 +6,8 @@
 # Version: 1.0
 #-----------------------------------------------------------------------
 
-#The objective of the code is to to execute all the codes and show all the graphs for one ticker
+#The objective of the code is to to execute all the codes and show all the graphs for one ticker as well as visualizing the parameters for each category with
+#colors to identify which have met the prerequisites and which have not 
 
 from typing import List
 from dataScraping import *
@@ -17,6 +18,7 @@ from recomBarChart import *
 import colorama
 from colorama import Fore, Style 
 
+#we initiate the colorama module
 colorama.init()
 
 def accessWeb(Ticker:str):
@@ -90,7 +92,7 @@ def main ():
 	#############################################################################################################################
 
 	if wrong:
-		print(f'{Ticker.upper()} not available')
+		print(f'{Ticker.upper()} not available (Check WIFI)')
 	
 	else:
 		#if it is available, we webscrape and evaluate each individual stock
@@ -113,13 +115,15 @@ def main ():
 		###############################################################################################################################
 
 		pointsEarnedHealth, TotalpointsHealth, RatioLE, RatioFD, RatioLA, RatioLA2, RatioLA3 = health(DebtEquity, LongTermLiabilities, NetOperatingCashFlow, EBIT, InterestExpense, TotalCurrentAssets, TotalCurrentLiabilities, TotalLiabilities, GrowthLA, TotalEquity, ShortTermDebt, LongTermDebt, TotalDebtReduction, GrowthDA, TotalAssets)
-		pointsEarnedFuture, TotalpointsFuture = future(EPSNextY, EPSNext5Y, estimateRevision1, estimateRevision2, AverageTarget, LowTarget, Buy, Overweight, Hold, Underweight, Sell, RevenueGrowthNextY, Price)
-		pointsEarnedPast, TotalpointsPast = past(ROA, ROE, RevenuePast5, RevenueGrowthPast5, EPSpast5, EPSgrowthPast5, NetIncomePast5)
+		pointsEarnedFuture, TotalpointsFuture, numBuy, numOverweight, numHold, numUnderweight, numSell = future(EPSNextY, EPSNext5Y, estimateRevision1, estimateRevision2, AverageTarget, LowTarget, Buy, Overweight, Hold, Underweight, Sell, RevenueGrowthNextY, Price)
+		pointsEarnedPast, TotalpointsPast, ProfitMarginsGrowth = past(ROA, ROE, RevenuePast5, RevenueGrowthPast5, EPSpast5, EPSgrowthPast5, NetIncomePast5)
 		pointsEarnedInsiders, TotalpointsInsiders = insiders(InsiderTrans, InstitutionTrans)
 		pointsEarnedValue, TotalpointsValue, GoldenRatio = value(PE, PEG, PS, PB, YearHighPercent, EBITDA, LongTermDebt, ShortTermDebt, FreeCashFlow, MarketCap, NetIncomePast5)
 
 		################################################################################################################################	
 
+		#we print the 5 categories with the each individual parameters that we have evaluated
+		#if in each parameter, the prerequisite was met, then it prints in green. else, it prints in red
 		print(f'Value: {round(pointsEarnedValue * 10 / TotalpointsValue, 2)} ({pointsEarnedValue}/{TotalpointsValue})' + 4*'\t' + f'Health: {pointsEarnedHealth * 10 / TotalpointsHealth} ({pointsEarnedHealth}/{TotalpointsHealth})')
 
 		print(Fore.GREEN + Style.BRIGHT + f'PE: {PE} (<23, <15)' + Style.RESET_ALL if float(PE) <= 23 and float(PE) != -1 else Fore.RED + Style.BRIGHT + f'PE: {PE} (<23, <15)' + Style.RESET_ALL , end = '')
@@ -144,15 +148,45 @@ def main ():
 		print(6*'\t' + Fore.GREEN + Style.BRIGHT + f'Growth Debt/Assets: {GrowthDA} (<0)' + Style.RESET_ALL if GrowthDA < 0 and GrowthDA != -1 else 6*'\t' + Fore.RED + Style.BRIGHT + f'Growth Debt/Assets: {GrowthDA} (<0)' + Style.RESET_ALL)
 		print(6*'\t' + Fore.GREEN + Style.BRIGHT + f'Debt Reduction: {TotalDebtReduction} (<0)' + Style.RESET_ALL if TotalDebtReduction < 0 and TotalDebtReduction != -1 else 6*'\t' + Fore.RED + Style.BRIGHT + f'Debt Reduction: {TotalDebtReduction} (<0)' + Style.RESET_ALL)
 
-		#we define different figures for each chart and then place them in different parts of the screen
-		#plt.figure(1)
-		#RBchart(Ticker, columnNames, Buy, Overweight, Hold, Underweight, Sell)
-		#plt.figure(2)
-		#REchart(Ticker, RevenuePast5, NetIncomePast5, soup2, soup1)
-		#plt.figure(3)
-		#PTchart(Ticker, Price, HighTarget, LowTarget, AverageTarget, NumberOfRatings)
+		print()
+		print()
 
-		#plt.show()
+		print(f'Future: {round(pointsEarnedFuture * 10 / TotalpointsFuture, 2)} ({pointsEarnedFuture}/{TotalpointsFuture})' + 4*'\t' + f'Past: {pointsEarnedPast * 10 / TotalpointsPast} ({pointsEarnedPast}/{TotalpointsPast})')
+
+		print(Fore.GREEN + Style.BRIGHT + f'EPS %Growth NextY: {EPSNextY} (>10, >20)' + Style.RESET_ALL if float(EPSNextY) > 10 and float(EPSNextY) != -1 else Fore.RED + Style.BRIGHT + f'EPS %Growth NextY: {EPSNextY} (>10, >20)' + Style.RESET_ALL, end = '')
+		print(2*'\t' + Fore.GREEN + Style.BRIGHT + f'EPS %Growth Past5Y: {round(float(EPSgrowthPast5), 2)} (>10, >20)' + Style.RESET_ALL if float(EPSgrowthPast5) > 10 and float(EPSgrowthPast5) != -1 else 2*'\t' + Fore.RED + Style.BRIGHT + f'EPS %Growth Past5Y: {round(float(EPSgrowthPast5), 2)} (>10, >20)' + Style.RESET_ALL)	
+
+		print(Fore.GREEN + Style.BRIGHT + f'EPS %Growth Next5Y: {EPSNext5Y} (>10, >20)' + Style.RESET_ALL if float(EPSNext5Y) > 10 and float(EPSNext5Y) != -1 else Fore.RED + Style.BRIGHT + f'EPS %Growth Next5Y: {EPSNext5Y} (>10, >20)' + Style.RESET_ALL, end = '')
+		print(2*'\t' + Fore.GREEN + Style.BRIGHT + f'Rev %Growth Past5Y: {round(float(RevenueGrowthPast5), 2)} (>10, >20)' + Style.RESET_ALL if float(RevenueGrowthPast5) > 10 and float(RevenueGrowthPast5) != -1 else 2*'\t' + Fore.RED + Style.BRIGHT + f'Rev %Growth Past5Y: {round(float(RevenueGrowthPast5), 2)} (>10, >20)' + Style.RESET_ALL)		
+
+		print(Fore.GREEN + Style.BRIGHT + f'Estimate Revision: {round(estimateRevision1, 2)} (>0)' + Style.RESET_ALL if estimateRevision1 > 0 and estimateRevision1 != -1 else Fore.RED + Style.BRIGHT + f'Estimate Revision: {round(estimateRevision1, 2)} (>0)' + Style.RESET_ALL, end = '')
+		print(3*'\t' + Fore.GREEN + Style.BRIGHT + f'ROE: {float(ROE)} (>20)' + Style.RESET_ALL if float(ROE) >= 20 and float(ROE) != -1 else 3*'\t' + Fore.RED + Style.BRIGHT + f'ROE: {float(ROE)} (>20)' + Style.RESET_ALL)		
+
+		print(Fore.GREEN + Style.BRIGHT + f'Price/AverageTarget: {round(float(Price) / AverageTarget, 2)} (<1)' + Style.RESET_ALL if float(Price) / AverageTarget < 1 and AverageTarget != -1 else Fore.RED + Style.BRIGHT + f'Price/AverageTarget: {round(float(Price) / AverageTarget, 2)} (<1)' + Style.RESET_ALL, end = '')
+		print(3*'\t' + Fore.GREEN + Style.BRIGHT + f'ROA: {float(ROA)} (>5, >10)' + Style.RESET_ALL if float(ROA) >= 5 and float(ROA) != -1 else 3*'\t' + Fore.RED + Style.BRIGHT + f'ROA: {float(ROA)} (>5, >10)' + Style.RESET_ALL)			
+
+		print(Fore.GREEN + Style.BRIGHT + f'Rev %Growth NextY: {RevenueGrowthNextY} (>5, >10, >20)' + Style.RESET_ALL if float(RevenueGrowthNextY) > 5 and float(RevenueGrowthNextY) != -1 else Fore.RED + Style.BRIGHT + f'Rev %Growth NextY: {RevenueGrowthNextY} (>5, >10, >20)' + Style.RESET_ALL, end = '')
+		print(2*'\t' + Fore.GREEN + Style.BRIGHT + f'ProfMargin Growth: {round(float(ProfitMarginsGrowth), 2)} (>0, >10)' + Style.RESET_ALL if float(ProfitMarginsGrowth) > 0 and float(ProfitMarginsGrowth) != -1 else 2*'\t' + Fore.RED + Style.BRIGHT + f'ProfMargin Growth: {round(float(ProfitMarginsGrowth), 2)} (>0, >10)' + Style.RESET_ALL)		
+
+		print(Fore.GREEN + Style.BRIGHT + f'Analyst Recom: {(numBuy + numOverweight) - (numHold + numSell + numUnderweight)} (>0)' + Style.RESET_ALL if (numBuy + numOverweight) - (numHold + numSell + numUnderweight) > 0 else Fore.RED + Style.BRIGHT + f'Analyst Recom: {(numBuy + numOverweight) - (numHold + numSell + numUnderweight)} (>0)' + Style.RESET_ALL)
+
+		print()
+		print()
+
+		print(f'Insiders: {round(pointsEarnedInsiders * 10 / TotalpointsInsiders, 2)} ({pointsEarnedInsiders}/{TotalpointsInsiders})')
+		print(Fore.GREEN + Style.BRIGHT + f'%Insider Transactions: {InsiderTrans} (>0)' + Style.RESET_ALL if float(InsiderTrans) > 0 else Fore.RED + Style.BRIGHT + f'%Insider Transactions: {InsiderTrans} (>0)' + Style.RESET_ALL)
+		print(Fore.GREEN + Style.BRIGHT + f'%Institution Transactions: {InstitutionTrans} (>0, >5)' + Style.RESET_ALL if float(InstitutionTrans) > 0 else Fore.RED + Style.BRIGHT + f'%Institution Transactions: {InstitutionTrans} (>0, >5)' + Style.RESET_ALL)
+
+
+		#we define different figures for each chart and then place them in different parts of the screen
+		plt.figure(1)
+		RBchart(Ticker, columnNames, Buy, Overweight, Hold, Underweight, Sell)
+		plt.figure(2)
+		REchart(Ticker, RevenuePast5, NetIncomePast5, soup2, soup1)
+		plt.figure(3)
+		PTchart(Ticker, Price, HighTarget, LowTarget, AverageTarget, NumberOfRatings)
+
+		plt.show()
 
 
 if __name__ == '__main__': main() 

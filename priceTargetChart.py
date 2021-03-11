@@ -6,7 +6,7 @@
 # Version: 1.0
 #-----------------------------------------------------------------------
 
-#The objective of the code is to take alll the recommendation info from the datascraping file and visualize it with a bar chart
+#The objective of the code is to take analyst price targets info and the current price of the stock and represent it in a interval
 
 import matplotlib.pyplot as plt
 import pandas as pd

@@ -196,6 +196,11 @@ def future(EPSNextY:float, EPSNext5Y:float, estimateRevision1:float, estimateRev
 		TotalpointsFuture += 5
 
 	#we need to know how many votes of each recommendation there is
+	numBuy = 0
+	numOverweight = 0
+	numHold = 0
+	numUnderweight = 0
+	numSell = 0
 	if len(Buy) + len(Overweight) + len(Hold) + len(Underweight) + len(Sell) >= 1:
 		numBuy = sumList(Buy)
 		numOverweight = sumList(Overweight)
@@ -209,7 +214,7 @@ def future(EPSNextY:float, EPSNext5Y:float, estimateRevision1:float, estimateRev
 			pointsEarnedFuture += 3
 		TotalpointsFuture += 5
 
-	return pointsEarnedFuture, TotalpointsFuture
+	return pointsEarnedFuture, TotalpointsFuture, numBuy, numOverweight, numHold, numUnderweight, numSell
 
 def past(ROA:float, ROE:float, RevenuePast5:List[float], RevenueGrowthPast5:float, EPSpast5:float, EPSgrowthPast5:float, NetIncomePast5:List[float], pointsEarnedPast = 0, TotalpointsPast = 0)	-> int:
 	#We measure differrent values and see if it meets the established parameters, adding points in affirmative cases
@@ -255,7 +260,7 @@ def past(ROA:float, ROE:float, RevenuePast5:List[float], RevenueGrowthPast5:floa
 			pointsEarnedPast += 1
 		TotalpointsPast += 4
 
-	return pointsEarnedPast, TotalpointsPast
+	return pointsEarnedPast, TotalpointsPast, ProfitMarginsGrowth
 
 def insiders(InsiderTrans:float, InstitutionTrans:float, pointsEarnedInsiders = 0, TotalpointsInsiders = 0) -> int:
 	#We measure differrent values and see if it meets the established parameters, adding points in affirmative cases
