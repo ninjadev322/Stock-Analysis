@@ -122,6 +122,14 @@ def main ():
 
 		################################################################################################################################	
 
+		#printing general data
+		print(f'Avg Volume: {AvgVolume}')
+		print(f'Market Cap: {MarketCap}')
+		print(f'Price: {Price}')
+
+		print()
+		print()
+
 		#we print the 5 categories with the each individual parameters that we have evaluated
 		#if in each parameter, the prerequisite was met, then it prints in green. else, it prints in red
 		print(f'Value: {round(pointsEarnedValue * 10 / TotalpointsValue, 2)} ({pointsEarnedValue}/{TotalpointsValue})' + 4*'\t' + f'Health: {pointsEarnedHealth * 10 / TotalpointsHealth} ({pointsEarnedHealth}/{TotalpointsHealth})')
@@ -173,7 +181,7 @@ def main ():
 		print()
 		print()
 
-		print(f'Insiders: {round(pointsEarnedInsiders * 10 / TotalpointsInsiders, 2)} ({pointsEarnedInsiders}/{TotalpointsInsiders})')
+		print(f'Insiders: {round(pointsEarnedInsiders * 10 / TotalpointsInsiders, 2)} ({pointsEarnedInsiders}/{TotalpointsInsiders})' if TotalpointsInsiders != 0 else f'Insiders: 0 ({pointsEarnedInsiders}/{TotalpointsInsiders})') 
 		print(Fore.GREEN + Style.BRIGHT + f'%Insider Transactions: {InsiderTrans} (>0)' + Style.RESET_ALL if float(InsiderTrans) > 0 else Fore.RED + Style.BRIGHT + f'%Insider Transactions: {InsiderTrans} (>0)' + Style.RESET_ALL)
 		print(Fore.GREEN + Style.BRIGHT + f'%Institution Transactions: {InstitutionTrans} (>0, >5)' + Style.RESET_ALL if float(InstitutionTrans) > 0 else Fore.RED + Style.BRIGHT + f'%Institution Transactions: {InstitutionTrans} (>0, >5)' + Style.RESET_ALL)
 
