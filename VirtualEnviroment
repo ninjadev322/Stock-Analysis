@@ -8,3 +8,5 @@
  - bs4 (BeautifulSoup)
  -matplotlib
  -colorama
+ -lxml
+ 
